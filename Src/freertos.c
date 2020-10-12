@@ -64,7 +64,7 @@
 
 extern unsigned short sys_tmr;
 unsigned short work_time = 1;
-extern unsigned short plc_cycle;
+extern volatile unsigned short plc_cycle;
 extern unsigned short ain[AI_CNT];
 extern unsigned short ain_raw[AI_CNT];
 extern unsigned char ain_alarm[AI_CNT];

@@ -49,7 +49,7 @@ extern uint16_t rs485_conf2;
 
 extern uint16_t app_id;
 extern uint8_t can_addr;
-extern unsigned short plc_cycle;
+extern volatile unsigned short plc_cycle;
 
 static void modbus_error(unsigned char func, unsigned char code, uint8_t * tx_ptr, void (*send)(uint8_t*,uint16_t)) {
 	unsigned short crc=0;

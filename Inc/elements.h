@@ -8,6 +8,8 @@
 #ifndef ELEMENTS_H_
 #define ELEMENTS_H_
 
+#include "pid.h"
+
 struct counter_state{
 	unsigned char clock;
 	unsigned char load;
