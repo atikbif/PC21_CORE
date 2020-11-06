@@ -41,6 +41,7 @@
 #include "system_vars.h"
 #include "scada.h"
 #include "led.h"
+#include "modules.h"
 
 /* USER CODE END Includes */
 
@@ -244,8 +245,8 @@ void StartDefaultTask(void const * argument)
 
 	  set_usr1_green_led(0);
 	  set_usr2_green_led(0);
-	  if(led_tmr==0) set_sys_green_led(1);
-	  else if(led_tmr==10) set_sys_green_led(0);
+	  if(led_tmr==0) set_sys_red_led(1);
+	  else if(led_tmr==10) set_sys_red_led(0);
 
 	  adc_spi_tmr++;
 	  if(adc_spi_tmr==2) {

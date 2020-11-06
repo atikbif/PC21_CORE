@@ -8,6 +8,13 @@
 #ifndef IODEF_H_
 #define IODEF_H_
 
+#define CLUST_REG_NUM		64
+#define CLUSTER_BITS_NUM	224
+#define NET_REG_NUM			128
+#define NET_TX_REG_NUM		16
+#define NET_BIT_NUM			128
+#define NET_TX_BIT_NUM		16
+
 #define TMRms1 tmrms[0]
 #define TMRms2 tmrms[1]
 #define TMRms3 tmrms[2]

@@ -3,20 +3,26 @@
 #include "iodef.h"
 #include "os_conf.h"
 #include "stdint.h"
+#include "heartbeat.h"
+#include "moddef.h"
+#include "modules.h"
+
 volatile unsigned short plc_cycle = 100;
 
-uint16_t cluster_regs[64]={0};
-uint16_t prev_cluster_regs[64]={0};
-uint8_t cluster_bits[224]={0};
-uint8_t prev_cluster_bits[224]={0};
-uint8_t net_bits[128]={0};
-uint8_t net_bits_tx[16]={0};
-uint8_t prev_net_bits_tx[16]={0};
-uint16_t net_regs[128]={0};
-uint16_t net_regs_tx[16]={0};
-uint16_t prev_net_regs_tx[16]={0};
+uint16_t cluster_regs[CLUST_REG_NUM]={0};
+uint16_t prev_cluster_regs[CLUST_REG_NUM]={0};
+uint8_t cluster_bits[CLUSTER_BITS_NUM]={0};
+uint8_t prev_cluster_bits[CLUSTER_BITS_NUM]={0};
+uint8_t net_bits[NET_BIT_NUM]={0};
+uint8_t net_bits_tx[NET_TX_BIT_NUM]={0};
+uint8_t prev_net_bits_tx[NET_TX_BIT_NUM]={0};
+uint16_t net_regs[NET_REG_NUM]={0};
+uint16_t net_regs_tx[NET_TX_REG_NUM]={0};
+uint16_t prev_net_regs_tx[NET_TX_REG_NUM]={0};
+
+
 // SS1..SS8 (nodes online offline)
-extern uint16_t node_link[8];
+extern uint16_t node_link[MAX_NODE_CNT];
 
 // SS9 PC21 Network Can
 extern uint16_t can_link;
@@ -65,32 +71,37 @@ unsigned long frl[FRL_CNT];
 extern unsigned short work_time;
 
 
-double res=0;
-double real_value=0;
-
-double p1_v8=0;
-double p1_v16=0;
-unsigned long p1_v20=0;
-unsigned short p1_v26=0;
-unsigned short p1_v31=0;
-unsigned short p1_v32=1;
-double p1_v33=0;
-unsigned short p1_v34=0;
-unsigned short p1_v35=0;
-double p1_v36=0;
-double p1_v37=0;
-double p1_v38=0;
-double p1_v39=0;
-double p1_v40=0;
-double p1_v41=0;
-double p1_v42=0;
-double p1_v43=0;
-double p1_v44=0;
+unsigned short p1_v1=1;
+unsigned char p1_v10=0;
+unsigned char p1_v12=0;
+unsigned char p1_v19=0;
+unsigned char p1_v26=0;
+unsigned char p1_v35=0;
+unsigned char p1_v37=0;
 unsigned short p1_v45=0;
-double p1_v46=0;
-unsigned short p1_v47=0;
-unsigned short p1_v48=0;
-double p1_v49=0;
+unsigned short p1_v53=0;
+unsigned short p1_v61=0;
+unsigned short p1_v69=0;
+unsigned short p1_v77=0;
+unsigned short p1_v85=0;
+unsigned short p1_v93=0;
+unsigned short p1_v101=0;
+unsigned char p1_v102=0;
+unsigned short p1_v103=0;
+unsigned short p1_v104=0;
+unsigned char p1_v105=0;
+unsigned short p1_v106=0;
+unsigned short p1_v107=0;
+unsigned char p1_v108=0;
+unsigned char p1_v109=0;
+unsigned short p1_v110=0;
+unsigned short p1_v111=0;
+unsigned short p1_v112=0;
+unsigned short p1_v113=0;
+unsigned short p1_v114=0;
+unsigned short p1_v115=0;
+unsigned short p1_v116=0;
+unsigned short p1_v117=0;
 struct pid_data p1_pid_st1={0,0,0};
 
 void init_vars() {
@@ -101,15 +112,12 @@ void inc_timers(){
 
 uint16_t app_id = 0;
 uint8_t can_addr = 0x00;
-const char* di_names[14] = {"","","","","","","","","","","","","","",};
-
-const char* do_names[6] = {"","","","","","",};
+const char* di_names[AI_CNT] = {"","","","","","","","","","","","","","",};
+const char* do_names[DO_CNT] = {"","","","","","",};
+const char* adc_names[AI_CNT] = {"","","","","","","","","","","","","","",};
 
 uint16_t used_ai = 0x0;
-
-const char* adc_names[14] = {"","","","","","","","","","","","","","",};
-
-uint8_t tdu[14] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
+uint8_t tdu[AI_CNT] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,};
 
 void calculate_adc(){
 	unsigned char i=0;
@@ -211,6 +219,8 @@ extern unsigned short scada_regs[16];
 
 #include "modbus_master.h"
 
+unsigned char bit_state(long inp,short n){if(n<0) n=0;if(n>31) n=31;if(inp & (1<<n)) return 1;return 0;}
+
 uint16_t mmb[64]={0};
 
 uint8_t err_mod[256]={0};
@@ -223,34 +233,58 @@ const uint16_t canal1_modbus_delay = 100;
 const mvar_reqs canal1_mvar_reqs[] = {
 };
 
-const uint16_t canal2_req_count=0;
+const uint16_t canal2_req_count=2;
 const uint16_t canal2_modbus_delay = 100;
 
+const mvar canal2_req1_vars[] = {
+	{0,-1,&MODB1},
+	{2,-1,&MODB2},
+	{4,-1,&MODB3},
+	{6,-1,&MODB4}
+};
+const mvar canal2_req2_vars[] = {
+	{0,-1,&MODB5},
+	{2,-1,&MODB6},
+	{4,-1,&MODB7},
+	{6,-1,&MODB8}
+};
 
 const mvar_reqs canal2_mvar_reqs[] = {
+	{"\x01\x03\x00\x00\x00\x04\x44\x09", 8, 13, canal2_req1_vars, 4, 0},
+	{"\x03\x03\x00\x00\x00\x04\x45\xeb", 8, 13, canal2_req2_vars, 4, 0}
 };
 
 void ld_process(void) {
-	p1_v33=variable_double(real_value,p1_v32);
-	p1_v34=const_unsigned_short(200,p1_v32);
-	p1_v35=const_unsigned_short(50,p1_v32);
-	p1_v36=const_double(0.01,p1_v32);
-	p1_v37=const_double(1,p1_v32);
-	p1_v38=const_double(2,p1_v32);
-	p1_v39=const_double(0,p1_v32);
-	p1_v40=const_double(100,p1_v32);
-	p1_v41=calculate_pid(&p1_pid_st1,p1_v33,p1_v34,p1_v35,p1_v36,p1_v37,p1_v38,p1_v39,p1_v40);
-	p1_v8=relay_double(&res,p1_v41);
-	p1_v42=variable_double(res,p1_v32);
-	p1_v43=const_double(2,p1_v32);
-	p1_v44=multiple_double(p1_v42,p1_v43);
-	p1_v45=const_unsigned_short(25,p1_v32);
-	p1_v46=plus_double(p1_v44,p1_v45);
-	p1_v16=relay_double(&real_value,p1_v46);
-	p1_v49=variable_double(real_value,p1_v32);
-	//p1_v20=fl_to_long(p1_v49);
-	//p1_v47=low_word(p1_v20);
-	//p1_v48=high_word(p1_v20);
-	p1_v26=relay_unsigned_short(&IR3,p1_v47);
-	p1_v31=relay_unsigned_short(&IR4,p1_v48);
+	p1_v12=open_contact(SC_BIT1,p1_v1);
+	p1_v10=open_contact(DO5,p1_v1);
+	p1_v12=p1_v12 | clos_contact(SC_BIT2,p1_v10);
+	p1_v102=relay_bool(&DO5,p1_v12);
+	p1_v103=variable_unsigned_short(SC_REG1,p1_v1);
+	p1_v104=const_unsigned_short(0,p1_v1);
+	p1_v19=bit_state(p1_v103,p1_v104);
+	p1_v105=relay_bool(&IB1,p1_v19);
+	p1_v106=variable_unsigned_short(SC_REG1,p1_v1);
+	p1_v107=const_unsigned_short(1,p1_v1);
+	p1_v26=bit_state(p1_v106,p1_v107);
+	p1_v108=relay_bool(&IB2,p1_v26);
+	p1_v37=open_contact(IB1,p1_v1);
+	p1_v35=open_contact(DO6,p1_v1);
+	p1_v37=p1_v37 | clos_contact(IB2,p1_v35);
+	p1_v109=relay_bool(&DO6,p1_v37);
+	p1_v45=variable_unsigned_short(MODB1,p1_v1);
+	p1_v110=relay_unsigned_short(&CLREG17,p1_v45);
+	p1_v69=variable_unsigned_short(MODB2,p1_v1);
+	p1_v111=relay_unsigned_short(&CLREG18,p1_v69);
+	p1_v53=variable_unsigned_short(MODB3,p1_v1);
+	p1_v112=relay_unsigned_short(&CLREG19,p1_v53);
+	p1_v61=variable_unsigned_short(MODB4,p1_v1);
+	p1_v113=relay_unsigned_short(&CLREG20,p1_v61);
+	p1_v77=variable_unsigned_short(MODB5,p1_v1);
+	p1_v114=relay_unsigned_short(&CLREG21,p1_v77);
+	p1_v85=variable_unsigned_short(MODB6,p1_v1);
+	p1_v115=relay_unsigned_short(&CLREG22,p1_v85);
+	p1_v93=variable_unsigned_short(MODB7,p1_v1);
+	p1_v116=relay_unsigned_short(&CLREG23,p1_v93);
+	p1_v101=variable_unsigned_short(MODB8,p1_v1);
+	p1_v117=relay_unsigned_short(&CLREG24,p1_v101);
 }

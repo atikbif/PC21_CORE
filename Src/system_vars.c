@@ -7,16 +7,15 @@
 
 #include "system_vars.h"
 #include "can_task.h"
+#include "heartbeat.h"
 
-extern uint8_t heartbeat_cnt[MAX_NODE_CNT];
-extern uint8_t net_heartbeat_cnt[MAX_NET_CNT];
 uint8_t can1_tmr = 30;
 uint8_t telemetry_tmr = 30;
 extern uint8_t can_addr;
 extern uint8_t cluster_addr;
 
 // SS1..SS8 (nodes online offline)
-uint16_t node_link[8]={0};
+uint16_t node_link[MAX_NODE_CNT]={0};
 
 // SS9 PC21 Network Can
 uint16_t can_link=0;
@@ -40,7 +39,7 @@ uint16_t telemetry_state=1;
 uint16_t cluster_num=0;
 
 // SS16..SS23 clusters online offline
-uint16_t cluster_link[8]={0};
+uint16_t cluster_link[MAX_NET_CNT]={0};
 
 // должна вызываться каждые 100 мс
 void update_system_vars() {
@@ -59,10 +58,9 @@ void update_system_vars() {
 	}
 	uint8_t i = 0;
 	// ss1..ss8 (node link: 1 - online, 0 - offline)
-	if(MAX_NODE_CNT>=8) {
-		for(i=0;i<8;i++) {
-			if(heartbeat_cnt[i]<HEARTBEAT_MAX) node_link[i]=1;else node_link[i]=0;
-		}
+
+	for(i=0;i<MAX_NODE_CNT;i++) {
+		if(is_internal_node_offline(i)) node_link[i]=0;else node_link[i]=1;
 	}
 
 	// SS9 PC21 network CAN (1 - online, 0 - offline)
@@ -79,9 +77,7 @@ void update_system_vars() {
 	}
 
 	// SS16..SS23 clusters online offline
-	if(MAX_NET_CNT>=8) {
-			for(i=0;i<8;i++) {
-				if(net_heartbeat_cnt[i]<HEARTBEAT_MAX) cluster_link[i]=1;else cluster_link[i]=0;
-			}
-		}
+	for(i=0;i<MAX_NET_CNT;i++) {
+		if(is_external_node_offline(i)) cluster_link[i]=0;else cluster_link[i]=1;
+	}
 }

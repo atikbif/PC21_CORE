@@ -36,6 +36,7 @@
 #include "os_conf.h"
 #include "eeprom.h"
 #include "can_tx_stack.h"
+#include "can_task.h"
 
 /* USER CODE END Includes */
 
@@ -96,6 +97,8 @@ uint8_t baud_dir2 = 3;
 extern uint16_t ai_type;
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
+
+extern volatile uint8_t can_tx_tmr;
 
 /* USER CODE END PV */
 
@@ -354,6 +357,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   /* USER CODE BEGIN Callback 0 */
 
 	static uint16_t tmp = 0;
+
+	if(can_tx_tmr <= CAN_TX_TMR_GAP) can_tx_tmr++;
 
 	if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
 	  if(dir1_tmr) {

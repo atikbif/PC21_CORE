@@ -8,6 +8,7 @@
 #include "scada.h"
 #include <stdint.h>
 #include "can_task.h"
+#include "heartbeat.h"
 
 extern uint8_t answer_94[28];
 extern uint8_t answer_95[128];
@@ -70,9 +71,11 @@ void net_regs_to_scada_second() {
 void node_and_cluster_state_to_scada() {
 	uint8_t node_state = 0;
 	uint8_t clust_state = 0;
-	for(uint8_t i=0;i<8;i++) {
-		if(heartbeat_cnt[i]<HEARTBEAT_MAX) node_state |= 1 << i;
-		if(net_heartbeat_cnt[i]<HEARTBEAT_MAX) clust_state |= 1 << i;
+	for(uint8_t i=0;i<MAX_NODE_CNT;i++) {
+		if(is_internal_node_offline(i)==0) node_state |= 1 << i;
+	}
+	for(uint8_t i=0;i<MAX_NET_CNT;i++) {
+		if(is_external_node_offline(i)==0) clust_state |= 1 << i;
 	}
 	node_state|=0x80;	// имитация наличия модуля FE в скаде
 	answer_9b[0] = node_state;
