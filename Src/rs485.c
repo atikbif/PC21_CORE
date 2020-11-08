@@ -7,6 +7,7 @@
 
 #include "rs485.h"
 #include "main.h"
+#include "leds.h"
 
 #define UART_RX_READY_TIME_MS		5
 
@@ -27,6 +28,11 @@ extern const uint16_t canal1_req_count;
 extern uint8_t baud_dir1;
 extern uint8_t baud_dir2;
 
+extern struct led_state rs1_led_rx;
+extern struct led_state rs1_led_tx;
+extern struct led_state rs2_led_rx;
+extern struct led_state rs2_led_tx;
+
 __weak void rx1_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 
 }
@@ -36,8 +42,8 @@ __weak void rx2_callback(uint8_t* rx_ptr,uint16_t rx_cnt) {
 }
 
 void uart1_scan(void) {
-
 	if(canal1_req_count==0 && rx1_cnt && rx1_tmr>=baud_dir1+UART_RX_READY_TIME_MS) {
+		rs1_led_rx.on_cmd = 1;
 		rx1_callback(rx1_buf,rx1_cnt);
 		rx1_cnt = 0;
 		rx1_tmr = 0;
@@ -45,8 +51,8 @@ void uart1_scan(void) {
 }
 
 void uart2_scan(void) {
-
 	if(canal2_req_count==0 && rx2_cnt && rx2_tmr>=baud_dir2+UART_RX_READY_TIME_MS) {
+		rs2_led_rx.on_cmd = 1;
 		rx2_callback(rx2_buf,rx2_cnt);
 		rx2_cnt = 0;
 		rx2_tmr = 0;
@@ -74,6 +80,7 @@ void send_data_to_uart1(uint8_t *ptr, uint16_t cnt) {
 	LL_DMA_SetMemorySize(DMA2, LL_DMA_STREAM_7, LL_DMA_MDATAALIGN_BYTE);
 	LL_USART_EnableDMAReq_TX(USART1);
 	LL_DMA_EnableStream(DMA2, LL_DMA_STREAM_7);
+	rs1_led_tx.on_cmd = 1;
 }
 
 void write_data_to_uart1(buf* data) {
@@ -101,6 +108,7 @@ void send_data_to_uart2(uint8_t *ptr, uint16_t cnt) {
 	LL_DMA_SetMemorySize(DMA1, LL_DMA_STREAM_6, LL_DMA_MDATAALIGN_BYTE);
 	LL_USART_EnableDMAReq_TX(USART2);
 	LL_DMA_EnableStream(DMA1, LL_DMA_STREAM_6);
+	rs2_led_tx.on_cmd = 1;
 }
 
 void write_data_to_uart2(buf* data) {

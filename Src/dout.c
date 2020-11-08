@@ -8,11 +8,13 @@
 #include "dout.h"
 #include "os_conf.h"
 #include "main.h"
-#include "led.h"
+#include "leds.h"
 
 extern unsigned char dout[DO_CNT];
 uint16_t do_reg = 0;
 extern uint8_t answer_93[14];
+extern struct led_state rele_led_on[RELE_LED_QUANTITY];
+extern struct led_state rele_led_fault[RELE_LED_QUANTITY];
 
 static void update_ethip_dout() {
 	uint8_t tmp=0;
@@ -36,51 +38,51 @@ void update_dout() {
 	uint16_t tmp_do_reg=0;
 	if(dout[0]) {
 		HAL_GPIO_WritePin(RELE1_GPIO_Port,RELE1_Pin,GPIO_PIN_SET);
-		set_rele_green_led(1,1);
+		rele_led_on[0].out_state = 1;
 		tmp_do_reg |= 0x0001;
 	}else {
 		HAL_GPIO_WritePin(RELE1_GPIO_Port,RELE1_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(1,0);
+		rele_led_on[0].out_state = 0;
 	}
 	if(dout[1]) {
 		HAL_GPIO_WritePin(RELE2_GPIO_Port,RELE2_Pin,GPIO_PIN_SET);
-		set_rele_green_led(2,1);
+		rele_led_on[1].out_state = 1;
 		tmp_do_reg |= 0x0002;
 	}else {
 		HAL_GPIO_WritePin(RELE2_GPIO_Port,RELE2_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(2,0);
+		rele_led_on[1].out_state = 0;
 	}
 	if(dout[2]) {
 		HAL_GPIO_WritePin(RELE3_GPIO_Port,RELE3_Pin,GPIO_PIN_SET);
-		set_rele_green_led(3,1);
+		rele_led_on[2].out_state = 1;
 		tmp_do_reg |= 0x0004;
 	}else {
 		HAL_GPIO_WritePin(RELE3_GPIO_Port,RELE3_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(3,0);
+		rele_led_on[2].out_state = 0;
 	}
 	if(dout[3]) {
 		HAL_GPIO_WritePin(RELE4_GPIO_Port,RELE4_Pin,GPIO_PIN_SET);
-		set_rele_green_led(4,1);
+		rele_led_on[3].out_state = 1;
 		tmp_do_reg |= 0x0008;
 	}else {
 		HAL_GPIO_WritePin(RELE4_GPIO_Port,RELE4_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(4,0);
+		rele_led_on[3].out_state = 0;
 	}
 	if(dout[4]) {
 		HAL_GPIO_WritePin(RELE5_GPIO_Port,RELE5_Pin,GPIO_PIN_SET);
-		set_rele_green_led(5,1);
+		rele_led_on[4].out_state = 1;
 		tmp_do_reg |= 0x0010;
 	}else {
 		HAL_GPIO_WritePin(RELE5_GPIO_Port,RELE5_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(5,0);
+		rele_led_on[4].out_state = 0;
 	}
 	if(dout[5]) {
 		HAL_GPIO_WritePin(RELE6_GPIO_Port,RELE6_Pin,GPIO_PIN_SET);
-		set_rele_green_led(6,1);
+		rele_led_on[5].out_state = 1;
 		tmp_do_reg |= 0x0020;
 	}else {
 		HAL_GPIO_WritePin(RELE6_GPIO_Port,RELE6_Pin,GPIO_PIN_RESET);
-		set_rele_green_led(6,0);
+		rele_led_on[5].out_state = 0;
 	}
 	do_reg = tmp_do_reg;
 	update_ethip_dout();

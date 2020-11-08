@@ -222,36 +222,18 @@ extern unsigned short scada_regs[16];
 unsigned char bit_state(long inp,short n){if(n<0) n=0;if(n>31) n=31;if(inp & (1<<n)) return 1;return 0;}
 
 uint16_t mmb[64]={0};
-
 uint8_t err_mod[256]={0};
-
 
 const uint16_t canal1_req_count=0;
 const uint16_t canal1_modbus_delay = 100;
 
-
 const mvar_reqs canal1_mvar_reqs[] = {
 };
 
-const uint16_t canal2_req_count=2;
+const uint16_t canal2_req_count=0;
 const uint16_t canal2_modbus_delay = 100;
 
-const mvar canal2_req1_vars[] = {
-	{0,-1,&MODB1},
-	{2,-1,&MODB2},
-	{4,-1,&MODB3},
-	{6,-1,&MODB4}
-};
-const mvar canal2_req2_vars[] = {
-	{0,-1,&MODB5},
-	{2,-1,&MODB6},
-	{4,-1,&MODB7},
-	{6,-1,&MODB8}
-};
-
 const mvar_reqs canal2_mvar_reqs[] = {
-	{"\x01\x03\x00\x00\x00\x04\x44\x09", 8, 13, canal2_req1_vars, 4, 0},
-	{"\x03\x03\x00\x00\x00\x04\x45\xeb", 8, 13, canal2_req2_vars, 4, 0}
 };
 
 void ld_process(void) {

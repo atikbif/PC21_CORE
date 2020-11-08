@@ -40,7 +40,7 @@
 #include "can_task.h"
 #include "system_vars.h"
 #include "scada.h"
-#include "led.h"
+#include "leds.h"
 #include "modules.h"
 
 /* USER CODE END Includes */
@@ -87,10 +87,10 @@ unsigned char scada_bits[16];
 unsigned short scada_regs[16];
 
 extern unsigned short ireg[IREG_CNT];
-
 extern SPI_HandleTypeDef hspi1;
-
 osThreadId canTaskHandle;
+
+extern struct led_state sys_led_green;
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -107,6 +107,33 @@ extern void update_ethip_scada_bits();
 extern void update_ethip_scada_regs();
 
 __weak void init_vars() {};
+
+static void update_data_to_scada() {
+	static uint8_t scada_tmr = 0;
+	scada_tmr++;
+	switch(scada_tmr) {
+		case 10:net_bits_to_scada_first();break;
+		case 20:net_bits_to_scada_second();break;
+		case 30:net_regs_to_scada_first();break;
+		case 40:net_regs_to_scada_second();break;
+		case 50:
+		  //update_ethip_intern_regs();
+		  cluster_regs_to_scada();
+		  break;
+		case 60:
+		  //update_ethip_intern_bits();
+		  cluster_bits_to_scada(0);
+		  break;
+		case 62:cluster_bits_to_scada(1);break;
+		case 64:cluster_bits_to_scada(2);break;
+		case 66:cluster_bits_to_scada(3);break;
+
+		case 70:update_ethip_scada_bits();break;
+		case 80:update_ethip_scada_regs();break;
+		case 90:node_and_cluster_state_to_scada();break;
+	}
+	if(scada_tmr>=100) scada_tmr = 0;
+}
    
 /* USER CODE END FunctionPrototypes */
 
@@ -205,48 +232,30 @@ void StartDefaultTask(void const * argument)
   static uint16_t value=0;
   static uint16_t filter_cnt = 0;
   static uint8_t ms_tmr = 0;
-  static uint8_t scada_tmr = 0;
+  static uint16_t sys_led_tmr = 0;
+
   init_din();
+  init_leds();
   start_up = 1;
   for(;;)
   {
-	  scada_tmr++;
-	  switch(scada_tmr) {
-	  	  case 10:net_bits_to_scada_first();break;
-	  	  case 20:net_bits_to_scada_second();break;
-	  	  case 30:net_regs_to_scada_first();break;
-	  	  case 40:net_regs_to_scada_second();break;
-	  	  case 50:
-	  		  //update_ethip_intern_regs();
-	  		  cluster_regs_to_scada();
-	  	  	  break;
-	  	  case 60:
-	  		  //update_ethip_intern_bits();
-	  		  cluster_bits_to_scada(0);
-	  		  break;
-	  	  case 62:cluster_bits_to_scada(1);break;
-	  	  case 64:cluster_bits_to_scada(2);break;
-	  	  case 66:cluster_bits_to_scada(3);break;
-
-	  	  case 70:update_ethip_scada_bits();break;
-	  	  case 80:update_ethip_scada_regs();break;
-	  	  case 90:node_and_cluster_state_to_scada();break;
+	  led_tmr++;
+	  sys_led_tmr++;
+	  if(led_tmr>=10) {
+		  led_tmr=0;
+		  if(sys_led_tmr>=500) {
+			  sys_led_tmr = 0;
+			  sys_led_green.on_cmd = 1;
+		  }
+		  led_cycle(10);
 	  }
-	  if(scada_tmr>=100) scada_tmr = 0;
+
+	  update_data_to_scada();
 	  ms_tmr++;
 	  if(ms_tmr>=100) {
 		  ms_tmr=0;
 		  update_system_vars();
 	  }
-	  led_tmr++;
-	  if(led_tmr>=1000) {
-		  led_tmr=0;
-	  }
-
-	  set_usr1_green_led(0);
-	  set_usr2_green_led(0);
-	  if(led_tmr==0) set_sys_red_led(1);
-	  else if(led_tmr==10) set_sys_red_led(0);
 
 	  adc_spi_tmr++;
 	  if(adc_spi_tmr==2) {
@@ -264,9 +273,7 @@ void StartDefaultTask(void const * argument)
 		  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
 		  crc = GetCRC16(adc_spi_rx,32);
 		  if(crc==0) {
-
 			  for(i=0;i<AI_CNT;i++) {
-
 				  value = (uint16_t)adc_spi_rx[2+i*2]<<8;
 				  value|=adc_spi_rx[3+i*2];
 				  adc_sum[i]+=value;
@@ -277,7 +284,6 @@ void StartDefaultTask(void const * argument)
 					  if(ai_type & ((uint16_t)1<<i)) {value = adc_sum[i]*50/62;}	// mA
 					  else { value = adc_sum[i]/10; }	// mV
 					  adc_sum[i] = 0;
-					  //ireg[4+i] = value;
 					  ain_raw[i]=value;
 				  }
 				  filter_cnt = 0;
@@ -297,12 +303,9 @@ void StartDefaultTask(void const * argument)
 	  }
 	  if(adc_spi_tmr>=10) {adc_spi_tmr=0;}
 
-
 	  update_din();
-
 	  uart1_scan();
 	  uart2_scan();
-
 	  modbus_master_process();
 
 	  osDelay(1);

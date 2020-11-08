@@ -11,7 +11,7 @@
 #include "os_conf.h"
 #include "can_tx_stack.h"
 #include <string.h>
-#include "led.h"
+#include "leds.h"
 #include "update_plc_data.h"
 #include "heartbeat.h"
 #include "can_protocol.h"
@@ -59,6 +59,11 @@ static uint8_t cluster_status = 0;
 extern uint16_t ai_mod_cnt;
 extern struct ai_mod* ai_modules_ptr;
 volatile uint8_t can_tx_tmr = 0;
+
+extern struct led_state can1_led_rx;
+extern struct led_state can1_led_tx;
+extern struct led_state can2_led_rx;
+extern struct led_state can2_led_tx;
 
 void init_can_addr_pins() {
 
@@ -108,6 +113,7 @@ static void can_write_from_stack() {
 			TxHeader.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData[i] = packet.data[i];
 			HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+			can1_led_tx.on_cmd = 1;
 		}else break;
 	}
 }
@@ -129,6 +135,7 @@ static void can_write_from_stack2() {
 			TxHeader2.DLC = packet.length;
 			for(i=0;i<packet.length;++i) TxData2[i] = packet.data[i];
 			HAL_CAN_AddTxMessage(&hcan2, &TxHeader2, TxData2, &TxMailbox2);
+			can2_led_tx.on_cmd = 1;
 		}else break;
 	}
 }
@@ -298,7 +305,7 @@ static void handle_can1() {
 	if(HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0)) {
 		if(HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData) == HAL_OK) {
 			can1_tmr = 0;
-
+			can1_led_rx.on_cmd = 1;
 			rx_packet.id = RxHeader.StdId & 0xFFFF;
 			rx_packet.length = RxHeader.DLC & 0xFF;
 			memcpy(rx_packet.data,RxData,CAN_DATA_SIZE);
@@ -317,6 +324,7 @@ static void handle_can2() {
 	static struct can_packet rx_packet2;
 	if(HAL_CAN_GetRxFifoFillLevel(&hcan2, CAN_RX_FIFO0)) {
 		if(HAL_CAN_GetRxMessage(&hcan2, CAN_RX_FIFO0, &RxHeader2, RxData2) == HAL_OK) {
+			can2_led_rx.on_cmd = 1;
 			tx_stack_data packet;
 			rx_packet2.id = RxHeader2.StdId & 0xFFFF;
 			rx_packet2.length = RxHeader2.DLC & 0xFF;

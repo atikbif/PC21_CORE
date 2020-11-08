@@ -71,6 +71,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define LED_RS2_TX_Pin GPIO_PIN_3
+#define LED_RS2_TX_GPIO_Port GPIOE
+#define LED_RS2_RX_Pin GPIO_PIN_4
+#define LED_RS2_RX_GPIO_Port GPIOE
+#define LED_RELE1_Pin GPIO_PIN_8
+#define LED_RELE1_GPIO_Port GPIOI
+#define LED_RELE5_Pin GPIO_PIN_13
+#define LED_RELE5_GPIO_Port GPIOC
+#define LED_RELE6_Pin GPIO_PIN_11
+#define LED_RELE6_GPIO_Port GPIOI
+#define LED_SYS_G_Pin GPIO_PIN_2
+#define LED_SYS_G_GPIO_Port GPIOF
+#define LED_SYS_R_Pin GPIO_PIN_3
+#define LED_SYS_R_GPIO_Port GPIOF
 #define SPI1_CS_Pin GPIO_PIN_15
 #define SPI1_CS_GPIO_Port GPIOF
 #define RELE5_Pin GPIO_PIN_9
@@ -89,10 +103,36 @@ void Error_Handler(void);
 #define RELE1_GPIO_Port GPIOC
 #define RELE2_Pin GPIO_PIN_7
 #define RELE2_GPIO_Port GPIOC
-#define LED_R_Pin GPIO_PIN_6
-#define LED_R_GPIO_Port GPIOI
-#define LED_G_Pin GPIO_PIN_7
-#define LED_G_GPIO_Port GPIOI
+#define LED_CAN1_RX_Pin GPIO_PIN_7
+#define LED_CAN1_RX_GPIO_Port GPIOD
+#define LED_RELE6_FAULT_Pin GPIO_PIN_10
+#define LED_RELE6_FAULT_GPIO_Port GPIOG
+#define LED_RELE5_FAULT_Pin GPIO_PIN_11
+#define LED_RELE5_FAULT_GPIO_Port GPIOG
+#define LED_RELE2_Pin GPIO_PIN_12
+#define LED_RELE2_GPIO_Port GPIOG
+#define LED_CAN2_TX_Pin GPIO_PIN_15
+#define LED_CAN2_TX_GPIO_Port GPIOG
+#define LED_RELE3_Pin GPIO_PIN_6
+#define LED_RELE3_GPIO_Port GPIOB
+#define LED_RELE4_FAULT_Pin GPIO_PIN_7
+#define LED_RELE4_FAULT_GPIO_Port GPIOB
+#define LED_RELE4_Pin GPIO_PIN_8
+#define LED_RELE4_GPIO_Port GPIOB
+#define LED_RELE1_FAULT_Pin GPIO_PIN_9
+#define LED_RELE1_FAULT_GPIO_Port GPIOB
+#define LED_RELE2_FAULT_Pin GPIO_PIN_0
+#define LED_RELE2_FAULT_GPIO_Port GPIOE
+#define LED_RELE3_FAULT_Pin GPIO_PIN_1
+#define LED_RELE3_FAULT_GPIO_Port GPIOE
+#define LED_CAN2_RX_Pin GPIO_PIN_4
+#define LED_CAN2_RX_GPIO_Port GPIOI
+#define LED_CAN1_TX_Pin GPIO_PIN_5
+#define LED_CAN1_TX_GPIO_Port GPIOI
+#define LED_RS1_TX_Pin GPIO_PIN_6
+#define LED_RS1_TX_GPIO_Port GPIOI
+#define LED_RS1_RX_Pin GPIO_PIN_7
+#define LED_RS1_RX_GPIO_Port GPIOI
 /* USER CODE BEGIN Private defines */
 
 #define LWIP_NETIF_LINK_CALLBACK        1
