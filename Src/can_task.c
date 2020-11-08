@@ -69,9 +69,15 @@ void init_can_addr_pins() {
 
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
+	__HAL_RCC_GPIOC_CLK_ENABLE();
 	__HAL_RCC_GPIOG_CLK_ENABLE();
 
-	GPIO_InitStruct.Pin = GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8;
+	GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = GPIO_PIN_7 | GPIO_PIN_8;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
 	GPIO_InitStruct.Pull = GPIO_PULLUP;
 	HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
@@ -81,11 +87,11 @@ uint8_t read_can_addr() {
 	can_addr = 0;
 	cluster_addr = 0;
 
-	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_8)==GPIO_PIN_RESET) can_addr |= 0x01;
-	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_7)==GPIO_PIN_RESET) can_addr |= 0x02;
-	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_6)==GPIO_PIN_RESET) can_addr |= 0x04;
+	if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_9)==GPIO_PIN_RESET) can_addr |= 0x01;
+	if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_8)==GPIO_PIN_RESET) can_addr |= 0x02;
+	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_8)==GPIO_PIN_RESET) can_addr |= 0x04;
 
-	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_5)==GPIO_PIN_RESET) {
+	if(HAL_GPIO_ReadPin(GPIOG,GPIO_PIN_7)==GPIO_PIN_RESET) {
 		cluster_addr = can_addr;
 		can_addr = 0;
 	}else {

@@ -223,6 +223,7 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   init_leds();
+  led_cycle(0);
   tcp_server_init();
   udp_server_init();
   static uint16_t led_tmr = 0;
