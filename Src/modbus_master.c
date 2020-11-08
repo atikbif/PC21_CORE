@@ -10,6 +10,7 @@
 #include "rs485.h"
 #include "crc.h"
 #include "main.h"
+#include "leds.h"
 
 static uint8_t tx2_buf[512];
 
@@ -26,6 +27,9 @@ extern uint8_t err_mod[256];
 
 extern uint8_t rx2_buf[UART_BUF_SISE];
 extern uint16_t rx2_cnt;
+
+extern struct led_state rs1_led_rx;
+extern struct led_state rs2_led_rx;
 
 void modbus_master_process() {
 	static uint8_t mb_cnt = 0;
@@ -64,6 +68,7 @@ void modbus_master_process() {
 			// анализ ответа
 			if(rx2_cnt>=canal2_mvar_reqs[mb_cnt].answer_length){
 				if(GetCRC16(rx2_buf,rx2_cnt)==0) {
+					rs2_led_rx.on_cmd = 1;
 					if(rx2_buf[0]==tx2_buf[0]) {
 						if(canal2_mvar_reqs[mb_cnt].wr_flag==0) {
 							vars = canal2_mvar_reqs[mb_cnt].vars_ptr;
