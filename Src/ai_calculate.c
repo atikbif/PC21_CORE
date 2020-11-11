@@ -87,14 +87,14 @@ void handle_adc(uint16_t raw_value, enum sens_type sensor, ai_mod_ptr mod, uint8
 			}
 			break;
 		case SENS0_20mA:
-			raw_value = val*500/62+0.5;
+			val = raw_value = val*500/62+0.5;
 			if(val>20000) val = 20000;
 			val = 255*val/20000+0.5;
 			if(val>255) val = 255;
 			ai = (uint8_t)val;
 			break;
 		case SENS4_20mA:
-			raw_value = val*500/62+0.5;
+			val = raw_value = val*500/62+0.5;
 			if(val>20000) val = 20000;
 			if(val<4000) val = 4000;
 			val = 255*val/16000-255/4.0+0.5;
@@ -116,7 +116,7 @@ void handle_adc(uint16_t raw_value, enum sens_type sensor, ai_mod_ptr mod, uint8
 			}
 			break;
 		case SENS2_10mA:
-			raw_value = val*500/62+0.5;
+			val = raw_value = val*500/62+0.5;
 			if(val>20000) val = 20000;
 			if(val<4000) val = 4000;
 			val = 255*val/8000-255/4.0+0.5;
