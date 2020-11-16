@@ -9,6 +9,7 @@
 #include "can_tx_stack.h"
 #include "update_plc_data.h"
 #include "ai_module.h"
+#include "do_module.h"
 
 extern uint8_t can_addr;
 extern uint8_t cluster_addr;
@@ -20,6 +21,9 @@ static uint8_t net_heartbeat_cnt[MAX_NET_CNT] = {HEARTBEAT_MAX,HEARTBEAT_MAX,HEA
 
 extern uint16_t ai_mod_cnt;
 extern struct ai_mod* ai_modules_ptr;
+
+extern uint16_t do_mod_cnt;
+extern struct do_mod* do_modules_ptr;
 
 void send_heartbeat() {
 	static tx_stack_data packet;
@@ -62,6 +66,31 @@ void increment_modules_heartbeats_counters() {
 				ai_modules_ptr[i].link_state = 1;
 			}else {
 				ai_modules_ptr[i].link_state = 0;
+				for(uint8_t j=0;j<MOD_AI_INP_CNT;++j) {
+					ai_modules_ptr[i].raw_value[j] = 0;
+					ai_modules_ptr[i].sensor_value[j] = 0;
+					ai_modules_ptr[i].ai_alarm[j] = 0;
+					ai_modules_ptr[i].ai_over[j] = 0;
+					ai_modules_ptr[i].ai_under[j] = 0;
+					ai_modules_ptr[i].di[j] = 0;
+					ai_modules_ptr[i].di_br[j] = 0;
+					ai_modules_ptr[i].di_sc[j] = 0;
+					ai_modules_ptr[i].di_fault[j] = 0;
+				}
+			}
+		}
+		for(uint8_t i=0;i<do_mod_cnt;++i) {
+			if(do_modules_ptr[i].heartbeat_cnt<HEARTBEAT_MAX) {
+				do_modules_ptr[i].heartbeat_cnt++;
+				do_modules_ptr[i].link_state = 1;
+			}else {
+				do_modules_ptr[i].link_state = 0;
+				for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
+					do_modules_ptr[i].do_state[j] = 0;
+					do_modules_ptr[i].prev_do_state[j] = 0;
+					do_modules_ptr[i].do_err[j] = 0;
+				}
+				do_modules_ptr[i].update_data = 0;
 			}
 		}
 	}

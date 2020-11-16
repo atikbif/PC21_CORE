@@ -50,6 +50,7 @@ uint8_t get_intern_addr(struct can_packet *packet);
 void sendIOName(uint8_t ioNum, uint8_t type, uint8_t req_node, uint8_t req_num);
 void sendResponse(tx_stack *stack, uint8_t signature);
 void sendByteWrite(tx_stack *stack, uint8_t dst_addr, uint8_t byte_addr, uint8_t byte_value);
+void sendOutState(tx_stack *stack, uint8_t dst_addr, uint8_t outState);
 void sendReqDataFromMod(tx_stack *stack, uint8_t dst_addr);
 
 #endif /* CAN_PROTOCOL_H_ */

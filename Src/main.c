@@ -98,7 +98,7 @@ extern uint16_t ai_type;
 tx_stack can1_tx_stack;
 tx_stack can2_tx_stack;
 
-extern volatile uint8_t can_tx_tmr;
+extern volatile uint8_t can1_tx_tmr;
 
 /* USER CODE END PV */
 
@@ -358,7 +358,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 	static uint16_t tmp = 0;
 
-	if(can_tx_tmr <= CAN_TX_TMR_GAP) can_tx_tmr++;
+	if(can1_tx_tmr <= CAN_TX_TMR_GAP) can1_tx_tmr++;
 
 	if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
 	  if(dir1_tmr) {

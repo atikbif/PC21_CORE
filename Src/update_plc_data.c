@@ -11,6 +11,8 @@
 #include "os_conf.h"
 #include "can_task.h"
 #include "heartbeat.h"
+#include "do_module.h"
+#include "can_protocol.h"
 
 extern uint8_t can_addr;
 extern uint8_t cluster_addr;
@@ -42,7 +44,29 @@ uint16_t update_di = 0x0000;
 uint16_t update_ai = 0x0000;
 uint16_t update_tmr = 0;
 
+extern uint16_t do_mod_cnt;
+extern struct do_mod* do_modules_ptr;
+
 static uint8_t net_status = 0;
+
+void update_mod_do_data() {
+	static uint16_t mod_do_tmr=0;
+	if(mod_do_tmr>=10) {
+		mod_do_tmr = 0;
+		for(uint8_t i=0;i<do_mod_cnt;++i) {
+			if(do_modules_ptr[i].update_data) {
+				do_modules_ptr[i].update_data = 0;
+				uint8_t res = 0;
+				for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
+					if(do_modules_ptr[i].do_state[j]) res|= 1<<j;
+					sendOutState(&can1_tx_stack,do_modules_ptr[i].addr,res);
+					break;
+				}
+			}
+		}
+	}
+	mod_do_tmr++;
+}
 
 void update_cluster_bits() {
 
@@ -431,6 +455,7 @@ void send_changed_data() {
 
 	update_ai_data();
 	update_di_data();
+	update_mod_do_data();
 	inp_tmr++;
 	if(inp_tmr==30000) {
 		update_di=0x3FFF;

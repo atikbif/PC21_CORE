@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+void update_mod_do_data();
 void update_cluster_bits();
 void update_cluster_regs();
 void update_net_regs();

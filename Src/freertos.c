@@ -42,6 +42,7 @@
 #include "scada.h"
 #include "leds.h"
 #include "modules.h"
+#include "do_module.h"
 
 /* USER CODE END Includes */
 
@@ -308,6 +309,7 @@ void StartDefaultTask(void const * argument)
 	  uart1_scan();
 	  uart2_scan();
 	  modbus_master_process();
+	  do_mod_cycle();
 
 	  osDelay(1);
   }

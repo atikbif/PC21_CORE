@@ -16,6 +16,7 @@
 #include "heartbeat.h"
 #include "can_protocol.h"
 #include "ai_module.h"
+#include "do_module.h"
 #include "ai_calculate.h"
 #include "modules.h"
 
@@ -58,7 +59,9 @@ extern uint16_t prev_net_regs_tx[16];
 static uint8_t cluster_status = 0;
 extern uint16_t ai_mod_cnt;
 extern struct ai_mod* ai_modules_ptr;
-volatile uint8_t can_tx_tmr = 0;
+extern uint16_t do_mod_cnt;
+extern struct do_mod* do_modules_ptr;
+volatile uint8_t can1_tx_tmr = 0;
 
 extern struct led_state can1_led_rx;
 extern struct led_state can1_led_tx;
@@ -104,12 +107,12 @@ static void can_write_from_stack() {
 	tx_stack_data packet;
 	uint8_t i = 0;
 	uint8_t try = 0;
-	if(can_tx_tmr<CAN_TX_TMR_GAP) return;
+	if(can1_tx_tmr<CAN_TX_TMR_GAP) return;
 	while(HAL_CAN_GetTxMailboxesFreeLevel(&hcan1)!=0) {
 		try++;
 		if(try>=10) return;
 		if(get_tx_can_packet(&can1_tx_stack,&packet)) {
-			can_tx_tmr = 0;
+			can1_tx_tmr = 0;
 			if(packet.length>8) continue;
 			TxHeader.StdId = packet.id;
 			TxHeader.ExtId = 0;
@@ -235,7 +238,24 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 			}
 		}
 	}else if(can_id->mod_type==Ext_DO_Mod) {
-
+		for(uint8_t i=0;i<do_mod_cnt;++i) {
+			if(do_modules_ptr[i].addr == mod_addr) {
+				switch(cmd) {
+					case Ext_Heartbeat:
+						if(do_modules_ptr[i].link_state==0) do_modules_ptr[i].update_data = 1;
+						do_modules_ptr[i].heartbeat_cnt = 0;
+						do_modules_ptr[i].link_state = 1;
+						break;
+					case Ext_DOState:
+						for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
+							if(rx_packet->data[6] & (1<<j)) do_modules_ptr[i].do_err[j] = 1;
+							else do_modules_ptr[i].do_err[j] = 0;
+						}
+						break;
+				}
+				break;
+			}
+		}
 	}else if(can_id->mod_type==Ext_RS_Mod) {
 
 	}
