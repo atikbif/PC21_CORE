@@ -59,9 +59,9 @@ void update_mod_do_data() {
 				uint8_t res = 0;
 				for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
 					if(do_modules_ptr[i].do_state[j]) res|= 1<<j;
-					sendOutState(&can1_tx_stack,do_modules_ptr[i].addr,res);
-					break;
 				}
+				sendOutState(&can1_tx_stack,do_modules_ptr[i].addr,res);
+				break;
 			}
 		}
 	}

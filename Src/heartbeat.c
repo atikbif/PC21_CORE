@@ -85,11 +85,11 @@ void increment_modules_heartbeats_counters() {
 				do_modules_ptr[i].link_state = 1;
 			}else {
 				do_modules_ptr[i].link_state = 0;
-				for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
-					do_modules_ptr[i].do_state[j] = 0;
-					do_modules_ptr[i].prev_do_state[j] = 0;
-					do_modules_ptr[i].do_err[j] = 0;
-				}
+//				for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
+//					do_modules_ptr[i].do_state[j] = 0;
+//					do_modules_ptr[i].prev_do_state[j] = 0;
+//					do_modules_ptr[i].do_err[j] = 0;
+//				}
 				do_modules_ptr[i].update_data = 0;
 			}
 		}
