@@ -85,9 +85,19 @@ void modbus_master_process() {
 								vars++;
 							}
 						}else err_mod[tx2_buf[0]] = 0;
-					}else if(err_mod[tx2_buf[0]] <255) err_mod[tx2_buf[0]]++;
-				}else if(err_mod[tx2_buf[0]] <255) err_mod[tx2_buf[0]]++;
-			}else if(err_mod[tx2_buf[0]] <255) err_mod[tx2_buf[0]]++;
+					}else err_mod[tx2_buf[0]]=1;
+				}else  err_mod[tx2_buf[0]]=1;
+			}else  err_mod[tx2_buf[0]]=1;
+			if(err_mod[tx2_buf[0]]) {
+				// обнуление переменной
+				if(canal2_mvar_reqs[mb_cnt].wr_flag==0) {
+					vars = canal2_mvar_reqs[mb_cnt].vars_ptr;
+					for(mb_tmp=0;mb_tmp<canal2_mvar_reqs[mb_cnt].var_cnt;mb_tmp++) {
+						*(vars->ptr) = 0;
+						vars++;
+					}
+				}
+			}
 			mb_cnt++;
 			if(mb_cnt>=canal2_req_count) {mb_cnt = 0;}
 		}
