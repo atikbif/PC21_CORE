@@ -308,7 +308,8 @@ void StartDefaultTask(void const * argument)
 	  update_din();
 	  uart1_scan();
 	  uart2_scan();
-	  modbus_master_process();
+	  modbus_master_process_canal1();
+	  modbus_master_process_canal2();
 	  do_mod_cycle();
 
 	  osDelay(1);

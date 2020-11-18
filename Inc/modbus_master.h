@@ -91,6 +91,7 @@ typedef struct {
 	uint8_t wr_flag;
 }mvar_reqs;
 
-void modbus_master_process();
+void modbus_master_process_canal1();
+void modbus_master_process_canal2();
 
 #endif /* MODBUS_MASTER_H_ */
