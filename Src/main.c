@@ -361,22 +361,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	if(can1_tx_tmr <= CAN_TX_TMR_GAP) can1_tx_tmr++;
 
 	if(rx1_cnt) {rx1_tmr++;}else rx1_tmr=0;
-	  if(dir1_tmr) {
-		dir1_tmr--;
-		if(dir1_tmr==0) {
-			HAL_GPIO_WritePin(RS485_DIR1_GPIO_Port,RS485_DIR1_Pin,GPIO_PIN_RESET);
-			LL_USART_EnableIT_RXNE(USART1);
-		}
-	  }
+//	  if(dir1_tmr) {
+//		dir1_tmr--;
+//		if(dir1_tmr==0) {
+//			HAL_GPIO_WritePin(RS485_DIR1_GPIO_Port,RS485_DIR1_Pin,GPIO_PIN_RESET);
+//			LL_USART_EnableIT_RXNE(USART1);
+//		}
+//	  }
 
 	  if(rx2_cnt) {rx2_tmr++;}else rx2_tmr=0;
-	  if(dir2_tmr) {
-		  dir2_tmr--;
-		  if(dir2_tmr==0) {
-			  HAL_GPIO_WritePin(RS485_DIR2_GPIO_Port,RS485_DIR2_Pin,GPIO_PIN_RESET);
-			  LL_USART_EnableIT_RXNE(USART2);
-		  }
-	  }
+//	  if(dir2_tmr) {
+//		  dir2_tmr--;
+//		  if(dir2_tmr==0) {
+//			  HAL_GPIO_WritePin(RS485_DIR2_GPIO_Port,RS485_DIR2_Pin,GPIO_PIN_RESET);
+//			  LL_USART_EnableIT_RXNE(USART2);
+//		  }
+//	  }
 
 	  sys_tmr++;
 	  for(tmp=0;tmp<TMRMS_CNT;tmp++) tmrms[tmp]++;

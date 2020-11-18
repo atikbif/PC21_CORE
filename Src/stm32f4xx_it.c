@@ -193,13 +193,15 @@ void DMA1_Stream6_IRQHandler(void)
 		LL_DMA_ClearFlag_TC6(DMA1);
 		/* Call function Transmission complete Callback */
 		LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
-		dir2_tmr = baud_dir2;
+		LL_USART_EnableIT_TC(USART2);
+		//dir2_tmr = baud_dir2;
 	}
 	if(LL_DMA_IsActiveFlag_TE6(DMA1))
 	{
 	 /* Call Error function */
 		LL_DMA_ClearFlag_TE6(DMA1);
 		LL_DMA_DisableStream(DMA1, LL_DMA_STREAM_6);
+		LL_USART_EnableIT_TC(USART2);
 	}
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
@@ -250,6 +252,11 @@ void USART1_IRQHandler(void)
 		if(rx1_cnt>=UART_BUF_SISE) rx1_cnt = 0;
 		rx1_tmr = 0;
 	}
+	if(LL_USART_IsActiveFlag_TC(USART1) && LL_USART_IsEnabledIT_TC(USART1)) {
+		LL_USART_ClearFlag_TC(USART1);
+		HAL_GPIO_WritePin(RS485_DIR1_GPIO_Port,RS485_DIR1_Pin,GPIO_PIN_RESET);
+		LL_USART_EnableIT_RXNE(USART1);
+	}
 
   /* USER CODE END USART1_IRQn 0 */
   /* USER CODE BEGIN USART1_IRQn 1 */
@@ -269,6 +276,11 @@ void USART2_IRQHandler(void)
 		rx2_buf[rx2_cnt++] = LL_USART_ReceiveData8(USART2);
 		if(rx2_cnt>=UART_BUF_SISE) rx2_cnt = 0;
 		rx2_tmr = 0;
+	}
+	if(LL_USART_IsActiveFlag_TC(USART2) && LL_USART_IsEnabledIT_TC(USART2)) {
+		LL_USART_ClearFlag_TC(USART2);
+		HAL_GPIO_WritePin(RS485_DIR2_GPIO_Port,RS485_DIR2_Pin,GPIO_PIN_RESET);
+		LL_USART_EnableIT_RXNE(USART2);
 	}
 
   /* USER CODE END USART2_IRQn 0 */
@@ -345,13 +357,15 @@ void DMA2_Stream7_IRQHandler(void)
 		LL_DMA_ClearFlag_TC7(DMA2);
 		/* Call function Transmission complete Callback */
 		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_7);
-		dir1_tmr = baud_dir1;
+		LL_USART_EnableIT_TC(USART1);
+		//dir1_tmr = baud_dir1;
 	}
 	if(LL_DMA_IsActiveFlag_TE7(DMA2))
 	{
 	 /* Call Error function */
 		LL_DMA_ClearFlag_TE7(DMA2);
 		LL_DMA_DisableStream(DMA2, LL_DMA_STREAM_7);
+		LL_USART_EnableIT_TC(USART1);
 	}
 
   /* USER CODE END DMA2_Stream7_IRQn 0 */
