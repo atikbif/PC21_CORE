@@ -37,6 +37,8 @@ extern uint16_t rs485_conf2;
 static void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void inline send_udp_data(struct udp_pcb *upcb,const ip_addr_t *addr,u16_t port,u16_t length);
 
+extern uint8_t loader_flag;
+
 void udp_server_init(void) {
 	struct udp_pcb *upcb;
 	err_t err;
@@ -103,9 +105,7 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 		  answer[3]=crc>>8;
 		  answer[4]=crc&0xFF;
 		  send_udp_data(upcb, addr, port,5);
-		  EE_WriteVariable(VirtAddVarTab[1],0);
-		  HAL_Delay(50);
-		  NVIC_SystemReset();
+		  loader_flag = 1;
 		  break;
 		case 0xED:// reset
 		  answer[0] = data[0];

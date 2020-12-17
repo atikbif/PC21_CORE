@@ -141,6 +141,7 @@ int main(void)
 
   HAL_FLASH_Unlock();
   EE_Init();
+
   EE_ReadVariable(VirtAddVarTab[0],  &ee_key);
   if(ee_key==EEPROM_KEY_VALUE) {
 	  EE_ReadVariable(VirtAddVarTab[1],  &ee_key);

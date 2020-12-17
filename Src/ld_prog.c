@@ -9,6 +9,7 @@
 #include "modules.h"
 #include "ai_module.h"
 #include "do_module.h"
+#include "rs_module.h"
 volatile unsigned short plc_cycle = 10;
 
 unsigned short ain[AI_CNT];
@@ -32,7 +33,7 @@ double frd[FRD_CNT];
 unsigned long frl[FRL_CNT];
 extern unsigned short work_time;
 
-unsigned short p1_v1=1;unsigned char p1_v2=0;unsigned char p1_v9=0;unsigned char p1_v10=0;unsigned char p1_v17=0;unsigned char p1_v18=0;unsigned char p1_v25=0;unsigned char p1_v26=0;unsigned char p1_v33=0;unsigned char p1_v34=0;unsigned char p1_v41=0;unsigned char p1_v42=0;unsigned char p1_v49=0;unsigned char p1_v50=0;unsigned char p1_v57=0;unsigned char p1_v58=0;unsigned char p1_v65=0;unsigned char p1_v66=0;unsigned char p1_v73=0;uint16_t cluster_regs[64]={0};
+uint16_t cluster_regs[64]={0};
 uint16_t prev_cluster_regs[64]={0};
 uint8_t cluster_bits[224]={0};
 uint8_t prev_cluster_bits[224]={0};
@@ -86,6 +87,7 @@ const mvar_reqs canal2_mvar_reqs[] = {
 };
 extern struct ai_mod* ai_modules_ptr;
 extern struct do_mod* do_modules_ptr;
+extern struct rs_mod* rs_modules_ptr;
 
 void init_vars()
 {
@@ -195,22 +197,4 @@ void calculate_adc(){
 }
 
 void ld_process(void) {
-	p1_v2=open_contact(IB1,p1_v1);
-	p1_v9=relay_bool(&MDO1,p1_v2);
-	p1_v10=open_contact(IB2,p1_v1);
-	p1_v17=relay_bool(&MDO2,p1_v10);
-	p1_v18=open_contact(IB3,p1_v1);
-	p1_v25=relay_bool(&MDO3,p1_v18);
-	p1_v26=open_contact(IB4,p1_v1);
-	p1_v33=relay_bool(&MDO4,p1_v26);
-	p1_v34=open_contact(MDO1_FAULT,p1_v1);
-	p1_v41=relay_bool(&IB5,p1_v34);
-	p1_v42=open_contact(MDO2_FAULT,p1_v1);
-	p1_v49=relay_bool(&IB6,p1_v42);
-	p1_v50=open_contact(MDO3_FAULT,p1_v1);
-	p1_v57=relay_bool(&IB7,p1_v50);
-	p1_v58=open_contact(MDO4_FAULT,p1_v1);
-	p1_v65=relay_bool(&IB8,p1_v58);
-	p1_v66=open_contact(MDO1_LINK,p1_v1);
-	p1_v73=relay_bool(&IB9,p1_v66);
 }

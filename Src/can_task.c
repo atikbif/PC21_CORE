@@ -17,6 +17,7 @@
 #include "can_protocol.h"
 #include "ai_module.h"
 #include "do_module.h"
+#include "rs_module.h"
 #include "ai_calculate.h"
 #include "modules.h"
 
@@ -61,6 +62,8 @@ extern uint16_t ai_mod_cnt;
 extern struct ai_mod* ai_modules_ptr;
 extern uint16_t do_mod_cnt;
 extern struct do_mod* do_modules_ptr;
+extern uint16_t rs_mod_cnt;
+extern struct rs_mod* rs_modules_ptr;
 volatile uint8_t can1_tx_tmr = 0;
 
 extern struct led_state can1_led_rx;
@@ -186,6 +189,7 @@ void canTask(void const * argument) {
 	}
 
 	init_modules();
+	osDelay(500);
 	// запрос текущих данных аналоговых модулей
 	for(uint8_t i=0;i<ai_mod_cnt;i++) {
 		sendReqDataFromMod(&can1_tx_stack, ai_modules_ptr[i].addr);
@@ -199,6 +203,9 @@ void canTask(void const * argument) {
 		increment_modules_heartbeats_counters();
 		if(update_all) update_all_data();
 		send_changed_data();
+		for(uint8_t i=0;i<rs_mod_cnt;++i) {
+			rs_module_write_config(&rs_modules_ptr[i],&can1_tx_stack);
+		}
 		can_write_from_stack();
 		if(can_addr==0) can_write_from_stack2();
 		osDelay(1);
@@ -208,16 +215,13 @@ void canTask(void const * argument) {
 static void handle_can1_extended_request(struct can_packet *rx_packet) {
 	struct can_packet_ext_id *can_id = (struct can_packet_ext_id *)(&rx_packet->id);
 	uint8_t mod_addr = rx_packet->data[0];
-	uint8_t signature = rx_packet->data[1];
-	__attribute__((unused)) uint8_t p_num = rx_packet->data[2] & 0x0F;
-	__attribute__((unused)) uint8_t p_quantity = rx_packet->data[2]>>4;
-	uint8_t cmd = rx_packet->data[3];
-	if(can_id->req==RequireAnswer) sendResponse(&can1_tx_stack, signature);
+	uint8_t cmd = rx_packet->data[1];
+	if(can_id->req==RequireAnswer) sendResponse(&can1_tx_stack, rx_packet->data[CAN_EXT_HEADER_LENGTH], cmd);
 	if(can_id->mod_type==Ext_AI_Mod) {
 		for(uint8_t i=0;i<ai_mod_cnt;++i) {
 			if(ai_modules_ptr[i].addr == mod_addr) {
 				switch(cmd) {
-					case Ext_Heartbeat:
+					case ExtHeartbeat:
 						if(ai_modules_ptr[i].link_state==0) {
 							// update new detected module configuration
 							sendByteWrite(&can1_tx_stack, mod_addr, 0, get_input_types(&ai_modules_ptr[i]));
@@ -225,7 +229,7 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 						ai_modules_ptr[i].heartbeat_cnt = 0;
 						ai_modules_ptr[i].link_state = 1;
 						break;
-					case Ext_AIState:{
+					case ExtAIState:{
 						uint8_t ai_num = rx_packet->data[CAN_EXT_HEADER_LENGTH];
 						if(ai_num>=1 && ai_num<=MOD_AI_INP_CNT) {
 							uint16_t val = rx_packet->data[CAN_EXT_HEADER_LENGTH+1] |
@@ -241,14 +245,14 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 		for(uint8_t i=0;i<do_mod_cnt;++i) {
 			if(do_modules_ptr[i].addr == mod_addr) {
 				switch(cmd) {
-					case Ext_Heartbeat:
+					case ExtHeartbeat:
 						if(do_modules_ptr[i].link_state==0) do_modules_ptr[i].update_data = 1;
 						do_modules_ptr[i].heartbeat_cnt = 0;
 						do_modules_ptr[i].link_state = 1;
 						break;
-					case Ext_DOState:
+					case ExtDOState:
 						for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
-							if(rx_packet->data[6] & (1<<j)) do_modules_ptr[i].do_err[j] = 1;
+							if(rx_packet->data[CAN_EXT_HEADER_LENGTH+2] & (1<<j)) do_modules_ptr[i].do_err[j] = 1;
 							else do_modules_ptr[i].do_err[j] = 0;
 						}
 						break;
@@ -257,7 +261,69 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 			}
 		}
 	}else if(can_id->mod_type==Ext_RS_Mod) {
+		for(uint8_t i=0;i<rs_mod_cnt;++i) {
+			if(rs_modules_ptr[i].addr == mod_addr) {
+				switch(cmd) {
+					case ExtHeartbeat:
+						// отправка конфигурации в случае появления модуля в сети
+						if(rs_modules_ptr[i].link_state==0) rs_modules_ptr[i].config.write_state = RS_START_WR_CONFIG;
+						if(rx_packet->data[CAN_EXT_HEADER_LENGTH+1]==0) {
+							if(rs_modules_ptr[i].config.write_state == RS_WAIT_CMD)	rs_modules_ptr[i].config.write_state = RS_START_WR_CONFIG;
+						}
+						rs_modules_ptr[i].heartbeat_cnt = 0;
+						rs_modules_ptr[i].link_state = 1;
+						break;
+					case ExtResponse:
+						if(rx_packet->data[CAN_EXT_HEADER_LENGTH+1]==ExtWriteBuf) {
+							rs_modules_ptr[i].config.rcv_id_value = rx_packet->data[CAN_EXT_HEADER_LENGTH];
+							rs_modules_ptr[i].config.rcv_id_flag = 1;
+						}
+						break;
+					case ExtSendRegWithFeedback:
+						if(rx_packet->length>=CAN_EXT_HEADER_LENGTH+2) {
+							uint16_t reg_addr = (uint16_t)rx_packet->data[CAN_EXT_HEADER_LENGTH]<<8;
+							reg_addr |= rx_packet->data[CAN_EXT_HEADER_LENGTH+1];
+							uint8_t reg_cnt = (rx_packet->length-CAN_EXT_HEADER_LENGTH-2)/2;
+							if(reg_cnt<=2) {
+								for(uint8_t j=0;j<reg_cnt;j++) {
+									if(reg_addr+j<RS_DEVICE_CNT/2) {
+										// состояние устройств
+										rs_modules_ptr[i].dev_state[(reg_addr+j)*2] = rx_packet->data[CAN_EXT_HEADER_LENGTH+2+j*2];
+										rs_modules_ptr[i].dev_state[(reg_addr+j)*2+1] = rx_packet->data[CAN_EXT_HEADER_LENGTH+2+j*2+1];
+									}
+									else {
+										// состояние регистров
+										uint16_t value = (uint16_t)rx_packet->data[CAN_EXT_HEADER_LENGTH+2+j*2]<<8;
+										value |= rx_packet->data[CAN_EXT_HEADER_LENGTH+2+j*2+1];
+										if(reg_addr-RS_DEVICE_CNT/2+j<RS_REG_CNT) {
+											rs_modules_ptr[i].data[reg_addr-RS_DEVICE_CNT/2+j] = value;
+										}
+									}
+								}
 
+								// send feedback
+								tx_stack_data tx_packet;
+								tx_packet.id = 0;
+								struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
+								tx_can_id->mod_type = Ext_PC21;
+								tx_can_id->req = NoAnswer;
+								tx_can_id->dir = ToOtherNode;
+								tx_can_id->srv = SRV_Channel;
+								tx_packet.data[0] = mod_addr;
+								tx_packet.data[1] = ExtRegFeedback;
+								uint8_t byte_cnt = rx_packet->length-CAN_EXT_HEADER_LENGTH;
+								if(byte_cnt>6) byte_cnt = 6;
+								for(uint8_t j=0;j<byte_cnt;j++) {
+									tx_packet.data[2+j] = rx_packet->data[CAN_EXT_HEADER_LENGTH+j];
+								}
+								tx_packet.length = CAN_EXT_HEADER_LENGTH + byte_cnt;
+								add_tx_can_packet(&can1_tx_stack,&tx_packet);
+							}
+						}
+						break;
+				}
+			}
+		}
 	}
 }
 

@@ -50,6 +50,7 @@ extern uint16_t rs485_conf2;
 extern uint16_t app_id;
 extern uint8_t can_addr;
 extern volatile unsigned short plc_cycle;
+extern uint8_t loader_flag;
 
 static void modbus_error(unsigned char func, unsigned char code, uint8_t * tx_ptr, void (*send)(uint8_t*,uint16_t)) {
 	unsigned short crc=0;
@@ -116,9 +117,7 @@ void rx_callback(uint8_t* rx_ptr,uint16_t rx_cnt, uint8_t * tx_ptr, void (*send)
 				tx_ptr[4]=crc>>8;
 				tx_ptr[5]=crc&0xFF;
 				send(tx_ptr,6);
-				EE_WriteVariable(VirtAddVarTab[1],0);
-				HAL_Delay(50);
-				NVIC_SystemReset();
+				loader_flag = 1;
 				break;
 			case READ_COILS:
 				mem_addr = ((unsigned short)rx_ptr[2]<<8) | rx_ptr[3];

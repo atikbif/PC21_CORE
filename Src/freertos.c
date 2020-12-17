@@ -43,6 +43,7 @@
 #include "leds.h"
 #include "modules.h"
 #include "do_module.h"
+#include "eeprom.h"
 
 /* USER CODE END Includes */
 
@@ -92,6 +93,9 @@ extern SPI_HandleTypeDef hspi1;
 osThreadId canTaskHandle;
 
 extern struct led_state sys_led_green;
+
+uint8_t loader_flag = 0;
+extern uint16_t  VirtAddVarTab[NB_OF_VAR];
 
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
@@ -311,6 +315,15 @@ void StartDefaultTask(void const * argument)
 	  modbus_master_process_canal1();
 	  modbus_master_process_canal2();
 	  do_mod_cycle();
+
+	  if(loader_flag) {
+		  loader_flag++;
+		  if(loader_flag>=50) {
+			  EE_WriteVariable(VirtAddVarTab[1],0);
+			  //EE_ReadVariable(VirtAddVarTab[1],  &v);
+			  NVIC_SystemReset();
+		  }
+	  }
 
 	  osDelay(1);
   }
