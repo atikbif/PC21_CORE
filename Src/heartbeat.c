@@ -47,7 +47,7 @@ void send_heartbeat() {
 		}
 	}
 	cnt++;
-	if(cnt>=500) {
+	if(cnt>=300) {
 		update_net_status();
 		cnt = 0;
 		packet.id = 0x0400 | 0x01 | (can_addr<<3) | (cluster_addr << 7);

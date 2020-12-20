@@ -14,10 +14,10 @@
 enum Service_type {SRV_Channel, SRV_Heartbeat, SRV_Download, SRV_Spare, SRV_Write, SRV_Read, SRV_Action, SRV_Event};
 enum SS_type {SS_Req_not_fragm, SS_Req_fragm, SS_Success_resp_not_fragm, SS_Success_resp_fragm, SS_Err_resp_not_fragm, SS_Err_resp_fragm, SS_Wait_resp_not_fragm, SS_Wait_resp_fragm};
 
-enum ExtCmd {ExtHeartbeat, ExtResponse, ExtGetModuleData, ExtDOState, ExtDOWrite, ExtAIState, ExtByteWrite,
-			 ExtWriteBuf, ExtSendRegWithFeedback, ExtRegFeedback};
-enum ExtDir {FromThisNode, ToOtherNode};
-enum ExtReqType {RequireAnswer, NoAnswer};
+enum ExtCmd {ExtHeartbeat, ExtResponse, ExtGetInfo, ExtDOState, ExtDOWrite, ExtAIState, ExtByteWrite,
+			 ExtWriteConf, ExtRegsStateWithValidation, ExtRegsValidation};
+enum ExtDir {BroadcastReq, ToNodeReq};
+enum ExtFB {NoAnswer, RequireAnswer};
 enum ExtModType {Ext_PC21, Ext_AI_Mod, Ext_DO_Mod, Ext_RS_Mod};
 
 struct can_packet_id {
@@ -50,7 +50,7 @@ uint8_t get_eoid(struct can_packet *packet);
 uint8_t get_intern_addr(struct can_packet *packet);
 void sendIOName(uint8_t ioNum, uint8_t type, uint8_t req_node, uint8_t req_num);
 void sendResponse(tx_stack *stack, uint8_t signature, enum ExtCmd cmd);
-void sendByteWrite(tx_stack *stack, uint8_t dst_addr, uint8_t byte_addr, uint8_t byte_value);
+void sendByteWrite(tx_stack *stack, uint8_t dst_addr, uint8_t byte_addr, uint8_t byte_value, uint8_t dev_type);
 void sendOutState(tx_stack *stack, uint8_t dst_addr, uint8_t outState);
 void sendReqDataFromMod(tx_stack *stack, uint8_t dst_addr);
 

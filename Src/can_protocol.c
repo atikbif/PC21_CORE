@@ -22,8 +22,6 @@ extern const char* adc_names[14];
 extern uint8_t can_addr;
 extern uint8_t cluster_addr;
 
-uint8_t req_id = 0;
-
 uint8_t is_packet_extended(uint32_t can_id) {
 	if((can_id & 0x07) == SRV_Channel) return 1;
 	return 0;
@@ -100,7 +98,7 @@ void sendResponse(tx_stack *stack, uint8_t signature, enum ExtCmd cmd) {
 	struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
 	tx_can_id->mod_type = Ext_PC21;
 	tx_can_id->req = NoAnswer;
-	tx_can_id->dir = FromThisNode;
+	tx_can_id->dir = BroadcastReq;
 	tx_can_id->srv = SRV_Channel;
 	tx_packet.data[0] = can_addr;
 	tx_packet.data[1] = ExtResponse;
@@ -110,19 +108,21 @@ void sendResponse(tx_stack *stack, uint8_t signature, enum ExtCmd cmd) {
 	add_tx_can_packet(stack,&tx_packet);
 }
 
-void sendByteWrite(tx_stack *stack, uint8_t dst_addr, uint8_t byte_addr, uint8_t byte_value) {
+void sendByteWrite(tx_stack *stack, uint8_t dst_addr, uint8_t byte_addr, uint8_t byte_value, uint8_t dev_type) {
 	tx_stack_data tx_packet;
 	tx_packet.id = 0;
 	struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
 	tx_can_id->mod_type = Ext_PC21;
 	tx_can_id->req = NoAnswer;
-	tx_can_id->dir = ToOtherNode;
+	tx_can_id->dir = ToNodeReq;
 	tx_can_id->srv = SRV_Channel;	// extended protocol
 	tx_packet.data[0] = dst_addr;
 	tx_packet.data[1] = ExtByteWrite;
 	tx_packet.data[2] = byte_addr;
 	tx_packet.data[3] = byte_value;
-	tx_packet.length = 4;
+	tx_packet.data[4] = can_addr;
+	tx_packet.data[5] = dev_type;
+	tx_packet.length = 6;
 	add_tx_can_packet(stack,&tx_packet);
 }
 
@@ -132,13 +132,14 @@ void sendOutState(tx_stack *stack, uint8_t dst_addr, uint8_t outState) {
 	struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
 	tx_can_id->mod_type = Ext_PC21;
 	tx_can_id->req = NoAnswer;
-	tx_can_id->dir = ToOtherNode;
+	tx_can_id->dir = ToNodeReq;
 	tx_can_id->srv = SRV_Channel;	// extended protocol
 	tx_packet.data[0] = dst_addr;
 	tx_packet.data[1] = ExtDOWrite;
 	tx_packet.data[2] = 0;	// out num
 	tx_packet.data[3] = outState;
-	tx_packet.length = 4;
+	tx_packet.data[4] = can_addr;
+	tx_packet.length = 5;
 	add_tx_can_packet(stack,&tx_packet);
 }
 
@@ -148,10 +149,10 @@ void sendReqDataFromMod(tx_stack *stack, uint8_t dst_addr) {
 	struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
 	tx_can_id->mod_type = Ext_PC21;
 	tx_can_id->req = NoAnswer;
-	tx_can_id->dir = ToOtherNode;
+	tx_can_id->dir = ToNodeReq;
 	tx_can_id->srv = SRV_Channel;	// extended protocol
 	tx_packet.data[0] = dst_addr;
-	tx_packet.data[1] = ExtGetModuleData;
+	tx_packet.data[1] = ExtGetInfo;
 	tx_packet.length = 2;
 	add_tx_can_packet(stack,&tx_packet);
 }

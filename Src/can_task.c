@@ -216,6 +216,8 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 	struct can_packet_ext_id *can_id = (struct can_packet_ext_id *)(&rx_packet->id);
 	uint8_t mod_addr = rx_packet->data[0];
 	uint8_t cmd = rx_packet->data[1];
+	if(mod_addr&0x80) mod_addr&=0x0F;
+	else mod_addr&=0x7F;
 	if(can_id->req==RequireAnswer) sendResponse(&can1_tx_stack, rx_packet->data[CAN_EXT_HEADER_LENGTH], cmd);
 	if(can_id->mod_type==Ext_AI_Mod) {
 		for(uint8_t i=0;i<ai_mod_cnt;++i) {
@@ -224,7 +226,7 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 					case ExtHeartbeat:
 						if(ai_modules_ptr[i].link_state==0) {
 							// update new detected module configuration
-							sendByteWrite(&can1_tx_stack, mod_addr, 0, get_input_types(&ai_modules_ptr[i]));
+							sendByteWrite(&can1_tx_stack, mod_addr, 0, get_input_types(&ai_modules_ptr[i]), Ext_AI_Mod);
 						}
 						ai_modules_ptr[i].heartbeat_cnt = 0;
 						ai_modules_ptr[i].link_state = 1;
@@ -244,11 +246,20 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 	}else if(can_id->mod_type==Ext_DO_Mod) {
 		for(uint8_t i=0;i<do_mod_cnt;++i) {
 			if(do_modules_ptr[i].addr == mod_addr) {
+				uint8_t do_value = 0;
 				switch(cmd) {
 					case ExtHeartbeat:
 						if(do_modules_ptr[i].link_state==0) do_modules_ptr[i].update_data = 1;
 						do_modules_ptr[i].heartbeat_cnt = 0;
 						do_modules_ptr[i].link_state = 1;
+						// контроль текущего состояния выходов модуля
+						if(do_modules_ptr[i].do_state[0]) do_value|=0x01;
+						if(do_modules_ptr[i].do_state[1]) do_value|=0x02;
+						if(do_modules_ptr[i].do_state[2]) do_value|=0x04;
+						if(do_modules_ptr[i].do_state[3]) do_value|=0x08;
+						if(do_value != (rx_packet->data[CAN_EXT_HEADER_LENGTH+1]&0x0F)) {
+							sendOutState(&can1_tx_stack,do_modules_ptr[i].addr,do_value);
+						}
 						break;
 					case ExtDOState:
 						for(uint8_t j=0;j<MOD_DO_OUT_CNT;++j) {
@@ -274,12 +285,12 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 						rs_modules_ptr[i].link_state = 1;
 						break;
 					case ExtResponse:
-						if(rx_packet->data[CAN_EXT_HEADER_LENGTH+1]==ExtWriteBuf) {
+						if(rx_packet->data[CAN_EXT_HEADER_LENGTH+1]==ExtWriteConf) {
 							rs_modules_ptr[i].config.rcv_id_value = rx_packet->data[CAN_EXT_HEADER_LENGTH];
 							rs_modules_ptr[i].config.rcv_id_flag = 1;
 						}
 						break;
-					case ExtSendRegWithFeedback:
+					case ExtRegsStateWithValidation:
 						if(rx_packet->length>=CAN_EXT_HEADER_LENGTH+2) {
 							uint16_t reg_addr = (uint16_t)rx_packet->data[CAN_EXT_HEADER_LENGTH]<<8;
 							reg_addr |= rx_packet->data[CAN_EXT_HEADER_LENGTH+1];
@@ -307,10 +318,10 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 								struct can_packet_ext_id *tx_can_id = (struct can_packet_ext_id *)&tx_packet.id;
 								tx_can_id->mod_type = Ext_PC21;
 								tx_can_id->req = NoAnswer;
-								tx_can_id->dir = ToOtherNode;
+								tx_can_id->dir = ToNodeReq;
 								tx_can_id->srv = SRV_Channel;
 								tx_packet.data[0] = mod_addr;
-								tx_packet.data[1] = ExtRegFeedback;
+								tx_packet.data[1] = ExtRegsValidation;
 								uint8_t byte_cnt = rx_packet->length-CAN_EXT_HEADER_LENGTH;
 								if(byte_cnt>6) byte_cnt = 6;
 								for(uint8_t j=0;j<byte_cnt;j++) {
