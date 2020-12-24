@@ -97,6 +97,8 @@ extern struct led_state sys_led_green;
 uint8_t loader_flag = 0;
 extern uint16_t  VirtAddVarTab[NB_OF_VAR];
 
+extern uint8_t adc_link;
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId progTaskHandle;
@@ -279,9 +281,12 @@ void StartDefaultTask(void const * argument)
 		  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
 		  crc = GetCRC16(adc_spi_rx,32);
 		  if(crc==0) {
+			  adc_link = 1;
 			  for(i=0;i<AI_CNT;i++) {
 				  value = (uint16_t)adc_spi_rx[2+i*2]<<8;
+				  adc_spi_rx[2+i*2] = 0;
 				  value|=adc_spi_rx[3+i*2];
+				  adc_spi_rx[3+i*2] = 0;
 				  adc_sum[i]+=value;
 			  }
 			  filter_cnt++;
@@ -305,7 +310,7 @@ void StartDefaultTask(void const * argument)
 				  }
 				  update_ethip_ain();
 			  }
-		  }
+		  }else adc_link = 0;
 	  }
 	  if(adc_spi_tmr>=10) {adc_spi_tmr=0;}
 

@@ -12,6 +12,7 @@
 #include <string.h>
 #include "eeprom.h"
 #include "modbus.h"
+#include "os_conf.h"
 
 #define UDP_SERVER_PORT    12146
 #define INCORRECT_PAGE_NUM	1
@@ -30,9 +31,21 @@ extern uint8_t ip_addr[4];
 extern uint8_t ip_mask[4];
 extern uint8_t ip_gate[4];
 extern uint16_t ai_type;
+extern uint16_t used_ai;
 extern uint8_t net_address;
 extern uint16_t rs485_conf1;
 extern uint16_t rs485_conf2;
+
+extern unsigned char din[DI_CNT];
+extern uint8_t din_break[DI_CNT];
+extern uint8_t din_short_circuit[DI_CNT];
+extern uint8_t din_fault[DI_CNT];
+
+extern unsigned short ain_raw[AI_CNT];
+extern unsigned short ain[AI_CNT];
+extern unsigned char ain_under[AI_CNT];
+extern unsigned char ain_over[AI_CNT];
+extern unsigned char ain_alarm[AI_CNT];
 
 static void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void inline send_udp_data(struct udp_pcb *upcb,const ip_addr_t *addr,u16_t port,u16_t length);
@@ -117,6 +130,45 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 		  send_udp_data(upcb, addr, port,5);
 		  HAL_Delay(50);
 		  NVIC_SystemReset();
+		  break;
+		case 0xC0:	// read di state
+		  answer[0] = data[0];
+		  answer[1] = data[1];
+		  answer[2] = data[2];
+		  for(uint8_t i=0;i<DI_CNT;++i) {
+			  tmp = 0;
+			  if(din[i]) tmp|=0x01;
+			  if(din_short_circuit[i]) tmp|=0x02;
+			  if(din_break[i]) tmp|=0x04;
+			  if((ai_type & ((uint16_t)1<<i)) && (!(used_ai & (1<<i)))) tmp|=0x08;
+			  answer[3+i] = tmp;
+		  }
+		  crc = GetCRC16((unsigned char*)answer,3+DI_CNT);
+		  answer[3+DI_CNT]=crc>>8;
+		  answer[4+DI_CNT]=crc&0xFF;
+		  send_udp_data(upcb, addr, port,5+DI_CNT);
+		  break;
+		case 0xC1:	// read AI
+		  answer[0] = data[0];
+		  answer[1] = data[1];
+		  answer[2] = data[2];
+		  for(uint8_t i=0;i<AI_CNT;++i) {
+			  tmp = 0;
+			  answer[3+i*5] = ain_raw[i] >> 8;
+			  answer[4+i*5] = ain_raw[i] & 0xFF;
+			  answer[5+i*5] = ain[i] >> 8;
+			  answer[6+i*5] = ain[i] & 0xFF;
+			  if(used_ai & (1<<i)) tmp|=0x01;
+			  if(ai_type & ((uint16_t)1<<i)) tmp|=0x02;
+			  if(ain_under[i]) tmp|=0x04;
+			  if(ain_over[i]) tmp|=0x08;
+			  if(ain_alarm[i]) tmp|=0x10;
+			  answer[7+i*5] = tmp;
+		  }
+		  crc = GetCRC16((unsigned char*)answer,3+DI_CNT*5);
+		  answer[3+DI_CNT*5]=crc>>8;
+		  answer[4+DI_CNT*5]=crc&0xFF;
+		  send_udp_data(upcb, addr, port,5+DI_CNT*5);
 		  break;
 		case 0x03:
 		  answer[0] = data[0];

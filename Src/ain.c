@@ -17,6 +17,8 @@ extern unsigned char ain_alarm[AI_CNT];
 extern uint16_t ai_type;
 extern uint8_t answer_90[246];
 
+uint8_t adc_link = 0;
+
 void update_ethip_ain() {
 	uint8_t i = 0;
 	for(i=0;i<AI_CNT;i++) {
