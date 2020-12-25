@@ -13,6 +13,7 @@
 #include "eeprom.h"
 #include "modbus.h"
 #include "os_conf.h"
+#include "system_vars.h"
 
 #define UDP_SERVER_PORT    12146
 #define INCORRECT_PAGE_NUM	1
@@ -53,6 +54,12 @@ extern unsigned char ibit[IBIT_CNT];
 extern uint8_t cluster_bits[224];
 extern uint8_t net_bits[128];
 extern unsigned char scada_bits[16];
+
+extern unsigned short ireg[IREG_CNT];
+extern uint16_t cluster_regs[64];
+extern uint16_t net_regs[128];
+extern unsigned short scada_regs[16];
+extern uint16_t mmb[64];
 
 static void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void inline send_udp_data(struct udp_pcb *upcb,const ip_addr_t *addr,u16_t port,u16_t length);
@@ -200,7 +207,7 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 			  cnt = ((unsigned short)data[6]<<8) | data[7];
 			  if(cnt && cnt<=256) {
 				  switch(data[3]) {
-					  case 0:{ // ibits
+					  case 0: // ibits
 						  for(uint16_t i=0;i<cnt;++i) {
 							  if(mem_addr+i<IBIT_CNT) answer[4+i] = ibit[mem_addr+i];
 							  else answer[4+i]=0;
@@ -209,9 +216,9 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 						  answer[4+cnt]=crc>>8;
 						  answer[5+cnt]=crc&0xFF;
 						  send_udp_data(upcb, addr, port,6+cnt);
-					  }
-					  break;
-					  case 1:{	// cluster bits
+
+						  break;
+					  case 1:	// cluster bits
 						  for(uint16_t i=0;i<cnt;++i) {
 							  if(mem_addr+i<224) answer[4+i] = cluster_bits[mem_addr+i];
 							  else answer[4+i]=0;
@@ -220,9 +227,8 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 						  answer[4+cnt]=crc>>8;
 						  answer[5+cnt]=crc&0xFF;
 						  send_udp_data(upcb, addr, port,6+cnt);
-					  }
-					  break;
-					  case 2:{	// net bits
+						  break;
+					  case 2:	// net bits
 						  for(uint16_t i=0;i<cnt;++i) {
 							  if(mem_addr+i<128) answer[4+i] = net_bits[mem_addr+i];
 							  else answer[4+i]=0;
@@ -231,22 +237,125 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 						  answer[4+cnt]=crc>>8;
 						  answer[5+cnt]=crc&0xFF;
 						  send_udp_data(upcb, addr, port,6+cnt);
-					  }
-					  break;
-					  case 3:{	// scada bits
+						  break;
+					  case 3:	// scada bits
 						  for(uint16_t i=0;i<cnt;++i) {
-							  if(mem_addr+i<16) answer[4+i] = cluster_bits[mem_addr+i];
+							  if(mem_addr+i<16) answer[4+i] = scada_bits[mem_addr+i];
 							  else answer[4+i]=0;
 						  }
 						  crc = GetCRC16((unsigned char*)answer,4+cnt);
 						  answer[4+cnt]=crc>>8;
 						  answer[5+cnt]=crc&0xFF;
 						  send_udp_data(upcb, addr, port,6+cnt);
-					  }
-					  break;
+						  break;
 				  }
 			  }
 
+		  }
+		  break;
+		case 0xC4:
+		  answer[0] = data[0];
+		  answer[1] = data[1];
+		  answer[2] = data[2];
+		  if(data[3]<=5) {
+			  answer[3] = data[3];
+			  mem_addr = ((unsigned short)data[4]<<8) | data[5];
+			  cnt = ((unsigned short)data[6]<<8) | data[7];
+			  if(cnt && cnt<=256) {
+				  switch(data[3]) {
+				  	  case 0x00:	// IREG
+				  		  for(uint16_t i=0;i<cnt;++i) {
+							  if(mem_addr+i<IREG_CNT) {
+								  answer[4+i*2] = ireg[mem_addr+i]>>8;
+								  answer[5+i*2] = ireg[mem_addr+i]&0xFF;
+							  }
+							  else {
+								  answer[4+i*2]=0;
+								  answer[5+i*2]=0;
+							  }
+				  		  }
+				  		  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+				  		  answer[4+cnt*2]=crc>>8;
+				  		  answer[5+cnt*2]=crc&0xFF;
+				  		  send_udp_data(upcb, addr, port,6+cnt*2);
+				  		  break;
+				  	  case 0x01:	// CLUSTER REGS
+				  		for(uint16_t i=0;i<cnt;++i) {
+							  if(mem_addr+i<64) {
+								  answer[4+i*2] = cluster_regs[mem_addr+i]>>8;
+								  answer[5+i*2] = cluster_regs[mem_addr+i]&0xFF;
+							  }
+							  else {
+								  answer[4+i*2]=0;
+								  answer[5+i*2]=0;
+							  }
+						  }
+						  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+						  answer[4+cnt*2]=crc>>8;
+						  answer[5+cnt*2]=crc&0xFF;
+						  send_udp_data(upcb, addr, port,6+cnt*2);
+				  		  break;
+				  	  case 0x02:	// NET REGS
+				  		for(uint16_t i=0;i<cnt;++i) {
+							  if(mem_addr+i<128) {
+								  answer[4+i*2] = net_regs[mem_addr+i]>>8;
+								  answer[5+i*2] = net_regs[mem_addr+i]&0xFF;
+							  }
+							  else {
+								  answer[4+i*2]=0;
+								  answer[5+i*2]=0;
+							  }
+						  }
+						  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+						  answer[4+cnt*2]=crc>>8;
+						  answer[5+cnt*2]=crc&0xFF;
+						  send_udp_data(upcb, addr, port,6+cnt*2);
+				  		  break;
+				  	  case 0x03:	// SS REGS
+				  		for(uint16_t i=0;i<cnt;++i) {
+							  tmp = getSSVar(mem_addr+i);
+							  answer[4+i*2] = tmp>>8;
+							  answer[5+i*2] = tmp&0xFF;
+						  }
+						  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+						  answer[4+cnt*2]=crc>>8;
+						  answer[5+cnt*2]=crc&0xFF;
+						  send_udp_data(upcb, addr, port,6+cnt*2);
+						  break;
+				  	  case 0x04:	// SCADA REGS
+				  		for(uint16_t i=0;i<cnt;++i) {
+							  if(mem_addr+i<16) {
+								  answer[4+i*2] = scada_regs[mem_addr+i]>>8;
+								  answer[5+i*2] = scada_regs[mem_addr+i]&0xFF;
+							  }
+							  else {
+								  answer[4+i*2]=0;
+								  answer[5+i*2]=0;
+							  }
+						  }
+						  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+						  answer[4+cnt*2]=crc>>8;
+						  answer[5+cnt*2]=crc&0xFF;
+						  send_udp_data(upcb, addr, port,6+cnt*2);
+						  break;
+				  	  case 0x05:	// MODBUS REGS
+				  		for(uint16_t i=0;i<cnt;++i) {
+							  if(mem_addr+i<64) {
+								  answer[4+i*2] = mmb[mem_addr+i]>>8;
+								  answer[5+i*2] = mmb[mem_addr+i]&0xFF;
+							  }
+							  else {
+								  answer[4+i*2]=0;
+								  answer[5+i*2]=0;
+							  }
+						  }
+						  crc = GetCRC16((unsigned char*)answer,4+cnt*2);
+						  answer[4+cnt*2]=crc>>8;
+						  answer[5+cnt*2]=crc&0xFF;
+						  send_udp_data(upcb, addr, port,6+cnt*2);
+				  		  break;
+				  }
+			  }
 		  }
 		  break;
 		case 0x03:

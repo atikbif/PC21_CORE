@@ -11,5 +11,6 @@
 #include <stdint.h>
 
 void update_system_vars();
+uint16_t getSSVar(uint8_t num);
 
 #endif /* SYSTEM_VARS_H_ */

@@ -8,6 +8,7 @@
 #include "system_vars.h"
 #include "can_task.h"
 #include "heartbeat.h"
+#include <iodef.h>
 
 uint8_t can1_tmr = 30;
 uint8_t telemetry_tmr = 30;
@@ -80,4 +81,34 @@ void update_system_vars() {
 	for(i=0;i<MAX_NET_CNT;i++) {
 		if(is_external_node_offline(i)) cluster_link[i]=0;else cluster_link[i]=1;
 	}
+}
+
+uint16_t getSSVar(uint8_t num) {
+	uint16_t res = 0;
+	switch(num) {
+		case 0:res=SS1;break;
+		case 1:res=SS2;break;
+		case 2:res=SS3;break;
+		case 3:res=SS4;break;
+		case 4:res=SS5;break;
+		case 5:res=SS6;break;
+		case 6:res=SS7;break;
+		case 7:res=SS8;break;
+		case 8:res=SS9;break;
+		case 9:res=SS10;break;
+		case 10:res=SS11;break;
+		case 11:res=SS12;break;
+		case 12:res=SS13;break;
+		case 13:res=SS14;break;
+		case 14:res=SS15;break;
+		case 15:res=SS16;break;
+		case 16:res=SS17;break;
+		case 17:res=SS18;break;
+		case 18:res=SS19;break;
+		case 19:res=SS20;break;
+		case 20:res=SS21;break;
+		case 21:res=SS22;break;
+		case 22:res=SS23;break;
+	}
+	return res;
 }
