@@ -37,8 +37,12 @@ void update_ethip_intern_bits() {
 	uint8_t byte_num;
 	for(i=0;i<64;i++) {
 		byte_num = i/8;
-		if(ibit[i]) answer_94[byte_num] |= 1<<(i%8);
-		else answer_94[byte_num] &= ~(1<<(i%8));
+		if(i<IBIT_CNT) {
+			if(ibit[i]) answer_94[byte_num] |= 1<<(i%8);
+			else answer_94[byte_num] &= ~(1<<(i%8));
+		}else {
+			answer_94[byte_num] &= ~(1<<(i%8));
+		}
 	}
 }
 

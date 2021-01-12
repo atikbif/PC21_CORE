@@ -16,7 +16,7 @@
 
 	#define IREG_CNT	256
 
-	#define IBIT_CNT	64
+	#define IBIT_CNT	256
 
 	#define TMRMS_CNT	4
 

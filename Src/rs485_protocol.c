@@ -129,7 +129,9 @@ void rx_callback(uint8_t* rx_ptr,uint16_t rx_cnt, uint8_t * tx_ptr, void (*send)
 				for(tmp=0;tmp<byte_count;tmp++) tx_ptr[3+tmp] = 0;
 				for(tmp=0;tmp<cnt;tmp++) {
 					if(mem_addr+tmp<DO_CNT) {if(dout[mem_addr+tmp]) tx_ptr[3+(tmp>>3)] |= 1<<(tmp%8);}
-					else if(mem_addr+tmp<DO_CNT + IBIT_CNT) {if(ibit[mem_addr+tmp-DO_CNT]) tx_ptr[3+(tmp>>3)] |= 1<<(tmp%8);}
+					else if(mem_addr+tmp<DO_CNT + IBIT_CNT) {
+						if(ibit[mem_addr+tmp-DO_CNT]) tx_ptr[3+(tmp>>3)] |= 1<<(tmp%8);
+					}
 					else if(mem_addr+tmp<DO_CNT + IBIT_CNT + DI_CNT) {if(din[mem_addr+tmp-DO_CNT-IBIT_CNT]) tx_ptr[3+(tmp>>3)] |= 1<<(tmp%8);}
 					else if(mem_addr+tmp<DO_CNT + IBIT_CNT + DI_CNT + AI_CNT) {if(ai_type & ((uint16_t)1<<(mem_addr+tmp-DO_CNT-IBIT_CNT-DI_CNT)) ) tx_ptr[3+(tmp>>3)] |= 1<<(tmp%8);}
 				}
@@ -409,7 +411,10 @@ void rx_callback(uint8_t* rx_ptr,uint16_t rx_cnt, uint8_t * tx_ptr, void (*send)
 				if(cnt&&(cnt!=0xFF00)) {modbus_error(WR_SINGLE_COIL,0x03,tx_ptr,send);break;}
 				if(mem_addr>=COIL_COUNT) {modbus_error(WR_SINGLE_COIL,0x02,tx_ptr,send);break;}
 				if(mem_addr<DO_CNT) {if(cnt) dout[mem_addr]=1;else dout[mem_addr]=0;}
-				else if(mem_addr<DO_CNT + IBIT_CNT) {if(cnt) ibit[mem_addr-DO_CNT]=1; else ibit[mem_addr-DO_CNT]=0;}
+				else if(mem_addr<DO_CNT + IBIT_CNT) {
+					if(cnt) ibit[mem_addr-DO_CNT]=1;
+					else ibit[mem_addr-DO_CNT]=0;
+				}
 				else if(mem_addr<DO_CNT + IBIT_CNT + DI_CNT) {if(cnt) din[mem_addr-DO_CNT-IBIT_CNT]=1; else din[mem_addr-DO_CNT-IBIT_CNT]=0;}
 				else if(mem_addr<DO_CNT + IBIT_CNT + DI_CNT + AI_CNT) {
 					if(cnt) ai_type |= ((uint16_t)1<<(mem_addr-DO_CNT-IBIT_CNT-DI_CNT));
@@ -436,7 +441,8 @@ void rx_callback(uint8_t* rx_ptr,uint16_t rx_cnt, uint8_t * tx_ptr, void (*send)
 					if(mem_addr+tmp<DO_CNT) {
 						if((rx_ptr[7+(tmp>>3)])&(1<<(tmp%8))) dout[mem_addr+tmp]=1;else dout[mem_addr+tmp]=0;
 					}else if(mem_addr+tmp<DO_CNT + IBIT_CNT) {
-						if((rx_ptr[7+(tmp>>3)])&(1<<(tmp%8))) ibit[mem_addr+tmp-DO_CNT]=1; else ibit[mem_addr+tmp-DO_CNT]=0;
+						if((rx_ptr[7+(tmp>>3)])&(1<<(tmp%8))) ibit[mem_addr+tmp-DO_CNT]=1;
+						else ibit[mem_addr+tmp-DO_CNT]=0;
 					}else if(mem_addr+tmp<DO_CNT + IBIT_CNT + DI_CNT) {
 						if((rx_ptr[7+(tmp>>3)])&(1<<(tmp%8))) din[mem_addr+tmp-DO_CNT-IBIT_CNT]=1; else din[mem_addr+tmp-DO_CNT-IBIT_CNT]=0;
 					}else if(mem_addr+tmp<DO_CNT + IBIT_CNT + DI_CNT + AI_CNT) {
