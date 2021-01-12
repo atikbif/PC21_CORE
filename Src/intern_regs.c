@@ -22,8 +22,13 @@ extern uint8_t ob_9a_upd;
 void update_ethip_intern_regs() {
 	uint8_t i = 0;
 	for(i=0;i<64;i++) {
-		answer_95[i*2] = ireg[i]&0xFF;
-		answer_95[i*2+1] = ireg[i]>>8;
+		if(i<IREG_CNT) {
+			answer_95[i*2] = ireg[i]&0xFF;
+			answer_95[i*2+1] = ireg[i]>>8;
+		}else {
+			answer_95[i*2] = 0;
+			answer_95[i*2+1] = 0;
+		}
 	}
 }
 

@@ -14,7 +14,7 @@
 
 	#define FRSH_CNT	16
 
-	#define IREG_CNT	64
+	#define IREG_CNT	256
 
 	#define IBIT_CNT	64
 
