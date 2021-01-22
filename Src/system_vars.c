@@ -42,6 +42,9 @@ uint16_t cluster_num=0;
 // SS16..SS23 clusters online offline
 uint16_t cluster_link[MAX_NET_CNT]={0};
 
+// SS24 aidi link
+extern uint8_t adc_link;
+
 // должна вызываться каждые 100 мс
 void update_system_vars() {
 	static uint16_t ms_tmr = 0;
@@ -109,6 +112,7 @@ uint16_t getSSVar(uint8_t num) {
 		case 20:res=SS21;break;
 		case 21:res=SS22;break;
 		case 22:res=SS23;break;
+		case 23:res=SS24;break;
 	}
 	return res;
 }

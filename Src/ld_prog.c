@@ -62,6 +62,8 @@ extern uint16_t telemetry_state;
 extern uint16_t cluster_num;
 // SS16..SS23 clusters online offline
 extern uint16_t cluster_link[8];
+// SS24 aidi link
+extern uint8_t adc_link;
 
 uint16_t app_id = 0;
 uint8_t can_addr = 0x00;

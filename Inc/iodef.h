@@ -2067,6 +2067,7 @@
 #define SS21	cluster_link[5]
 #define SS22	cluster_link[6]
 #define SS23	cluster_link[7]
+#define SS24	adc_link
 
 
 #endif /* IODEF_H_ */

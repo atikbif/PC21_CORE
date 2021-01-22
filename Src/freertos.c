@@ -266,7 +266,7 @@ void StartDefaultTask(void const * argument)
 	  }
 
 	  adc_spi_tmr++;
-	  if(adc_spi_tmr==2) {
+	  if(adc_spi_tmr==1) {
 		  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_RESET);
 	  }else if(adc_spi_tmr==4) {
 		  adc_spi_tx[0]=0x31;
@@ -277,7 +277,8 @@ void StartDefaultTask(void const * argument)
 		  adc_spi_tx[30] = crc >> 8;
 		  adc_spi_tx[31] = crc & 0xFF;
 		  HAL_SPI_TransmitReceive_DMA(&hspi1, adc_spi_tx, adc_spi_rx, 32);
-	  }else if(adc_spi_tmr==6) {
+		  ireg[99]++;
+	  }else if(adc_spi_tmr==7) {
 		  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
 		  crc = GetCRC16(adc_spi_rx,32);
 		  if(crc==0) {
