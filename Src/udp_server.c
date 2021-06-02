@@ -59,7 +59,7 @@ extern unsigned short ireg[IREG_CNT];
 extern uint16_t cluster_regs[64];
 extern uint16_t net_regs[128];
 extern unsigned short scada_regs[16];
-extern uint16_t mmb[64];
+extern uint16_t mmb[128];
 
 static void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void inline send_udp_data(struct udp_pcb *upcb,const ip_addr_t *addr,u16_t port,u16_t length);
@@ -340,7 +340,7 @@ void udp_server_receive_callback(void *arg, struct udp_pcb *upcb, struct pbuf *p
 						  break;
 				  	  case 0x05:	// MODBUS REGS
 				  		for(uint16_t i=0;i<cnt;++i) {
-							  if(mem_addr+i<64) {
+							  if(mem_addr+i<128) {
 								  answer[4+i*2] = mmb[mem_addr+i]>>8;
 								  answer[5+i*2] = mmb[mem_addr+i]&0xFF;
 							  }

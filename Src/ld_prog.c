@@ -72,7 +72,7 @@ const char* do_names[6] = {"","","","","","",};
 extern unsigned char scada_bits[16];
 extern unsigned short scada_regs[16];
 
-uint16_t mmb[64]={0};
+uint16_t mmb[128]={0};
 uint8_t err_mod_can1[256]={0};
 uint8_t err_mod_can2[256]={0};
 const uint16_t canal1_req_count=0;

@@ -254,10 +254,10 @@ static void low_level_init(struct netif *netif)
 
    uint8_t MACAddr[6] ;
   heth.Instance = ETH;
-  heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
-  //heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_DISABLE;
-  //heth.Init.Speed = ETH_SPEED_10M;
-  //heth.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
+  //heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
+  heth.Init.AutoNegotiation = ETH_AUTONEGOTIATION_DISABLE;
+  heth.Init.Speed = ETH_SPEED_10M;
+  heth.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
   heth.Init.PhyAddress = DP83848_PHY_ADDRESS;
   MACAddr[0] = 0x00;
   MACAddr[1] = 0x80;
