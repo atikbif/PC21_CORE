@@ -33,6 +33,13 @@
 
 extern uint8_t ip_addr[4];
 
+#include "crc.h"
+
+static unsigned short get_mac() {
+	unsigned short res = GetCRC16((unsigned char*)0x1FFF7A10,12);
+	return res;
+}
+
 /* USER CODE END 0 */
 
 /* Private define ------------------------------------------------------------*/
@@ -273,8 +280,9 @@ static void low_level_init(struct netif *netif)
   /* USER CODE BEGIN MACADDRESS */
 
   MACAddr[3] = 0x60;
-  MACAddr[4] = ip_addr[2];
-  MACAddr[5] = ip_addr[3];
+  unsigned short mac = get_mac();
+  MACAddr[4] = mac >> 8;//0x88;
+  MACAddr[5] = mac & 0xFF;//0x00;
     
   /* USER CODE END MACADDRESS */
 
@@ -556,39 +564,41 @@ void ethernetif_input(void const * argument)
 
   for( ;; )
   {
-    //if (osSemaphoreWait(s_xSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
-    if (osSemaphoreWait(s_xSemaphore, 1000) == osOK)
-    {
-      do
-      {   
-        p = low_level_input( netif );
-        if   (p != NULL)
-        {
-          if (netif->input( p, netif) != ERR_OK )
-          {
-            pbuf_free(p);
-          }
-        }
-      } while(p!=NULL);
-    }else {
-    	if (HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue) == HAL_OK) {
-    		if((regvalue & PHY_LINKED_STATUS)== (uint16_t)RESET) {
-    			// Link status = disconnected
-			   if (netif_is_link_up(netif)) {
-				   netif_set_down(netif);
-				   netif_set_link_down(netif);
-				   //HAL_GPIO_TogglePin(LED_G_GPIO_Port,LED_G_Pin);
-			   }
-    		}else {
-    			if (!netif_is_link_up(netif)) {
-    				netif_set_up(netif);
-    				netif_set_link_up(netif);
-    				//HAL_GPIO_TogglePin(LED_G_GPIO_Port,LED_G_Pin);
-    			}
-    		}
-    	}
+      //if (osSemaphoreWait(s_xSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
+	  if(netif_is_link_up(netif)) {
+		  if (osSemaphoreWait(s_xSemaphore, 1000) == osOK)
+		      {
+		        do
+		        {
+		          p = low_level_input( netif );
+		          if   (p != NULL)
+		          {
+		            if (netif->input( p, netif) != ERR_OK )
+		            {
+		              pbuf_free(p);
+		            }
+		          }
+		        } while(p!=NULL);
+		      }else {
+		      	if (HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue) == HAL_OK) {
+		      		if((regvalue & PHY_LINKED_STATUS)== (uint16_t)RESET) {
+		      		   // Link status = disconnected
+					   netif_set_down(netif);
+					   netif_set_link_down(netif);
+		      		}
+		      	}
+		      	osDelay(1);
+		      }
+	  }else {
+		  if (HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue) == HAL_OK) {
+			if((regvalue & PHY_LINKED_STATUS)!= (uint16_t)RESET) {
+				netif_set_up(netif);
+				netif_set_link_up(netif);
+			}
+		  }
+		  osDelay(1000);
+	  }
 
-    }
   }
 }
 
@@ -772,12 +782,12 @@ void ethernetif_update_config(struct netif *netif)
     HAL_ETH_ConfigMAC(&heth, (ETH_MACInitTypeDef *) NULL);
 
     /* Restart MAC interface */
-    HAL_ETH_Start(&heth);   
+    HAL_ETH_Start(&heth);
   }
   else
   {
     /* Stop MAC interface */
-    HAL_ETH_Stop(&heth);
+    //HAL_ETH_Stop(&heth);
   }
 
   ethernetif_notify_conn_changed(netif);

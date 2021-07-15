@@ -330,6 +330,12 @@
 							<tool id="com.atollic.truestudio.ar.base.538527070" name="Archiver" superClass="com.atollic.truestudio.ar.base"/>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="com.atollic.truestudio.configuration.release.1518366166.1581406144" name="ethernetif.c" rcbsApplicability="disable" resourcePath="Src/ethernetif.c" toolsToInvoke="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1464156446">
+						<tool id="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1464156446" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447">
+							<option id="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level.393455433" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.optimization.level" useByScannerDiscovery="false" value="com.atollic.truestudio.gcc.optimization.level.0fast" valueType="enumerated"/>
+							<inputType id="com.atollic.truestudio.gcc.input.1231893300" superClass="com.atollic.truestudio.gcc.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="com.atollic.truestudio.exe.release.311825581.983937533" name="" rcbsApplicability="disable" resourcePath="nofile" toolsToInvoke="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1976695455">
 						<tool id="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447.1976695455" name="C Compiler" superClass="com.atollic.truestudio.exe.release.toolchain.gcc.1836874447">
 							<inputType id="com.atollic.truestudio.gcc.input.1274347818" superClass="com.atollic.truestudio.gcc.input"/>
