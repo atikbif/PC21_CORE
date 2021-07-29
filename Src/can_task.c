@@ -436,7 +436,7 @@ static void handle_can2() {
 			if(is_packet_extended(RxHeader2.StdId)) {
 
 			}else {
-				struct can_packet_id *can_id = (struct can_packet_id *)(&RxHeader.StdId);
+				struct can_packet_id *can_id = (struct can_packet_id *)(&RxHeader2.StdId);
 				__attribute__((unused)) enum SS_type ss = get_ss(&rx_packet2);
 				uint8_t eoid = get_eoid(&rx_packet2);
 				uint8_t intern_addr = get_intern_addr(&rx_packet2);
