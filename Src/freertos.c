@@ -244,6 +244,7 @@ void StartDefaultTask(void const * argument)
 
   init_din();
   init_leds();
+  //osDelay(1000);
   start_up = 1;
   for(;;)
   {
@@ -277,7 +278,6 @@ void StartDefaultTask(void const * argument)
 		  adc_spi_tx[30] = crc >> 8;
 		  adc_spi_tx[31] = crc & 0xFF;
 		  HAL_SPI_TransmitReceive_DMA(&hspi1, adc_spi_tx, adc_spi_rx, 32);
-		  ireg[99]++;
 	  }else if(adc_spi_tmr==7) {
 		  HAL_GPIO_WritePin(SPI1_CS_GPIO_Port,SPI1_CS_Pin,GPIO_PIN_SET);
 		  crc = GetCRC16(adc_spi_rx,32);
@@ -350,6 +350,7 @@ void ProgTask(void const * argument)
 
   static unsigned short work_tmr = 0;
   while(start_up==0) {osDelay(1);}
+  osDelay(2000);
   init_vars();
   MX_IWDG_Init();
   for(;;)

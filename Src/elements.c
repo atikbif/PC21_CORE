@@ -8,6 +8,10 @@
 #include "elements.h"
 #include <math.h>
 
+#define FILTER_OFF				0
+#define FILTER_IS_WAITING_EDGE	1
+#define FILTER_IS_WORKING		2
+
 unsigned char open_contact(unsigned char contact, unsigned char inpState){if(contact) return inpState;else return 0;}
 unsigned char clos_contact(unsigned char contact, unsigned char inpState){if(contact==0) return inpState;else return 0;}
 
@@ -79,7 +83,7 @@ unsigned short delay_on(unsigned short *ms_tmr, unsigned short *filter_on, unsig
 		}else return 1;
 	}*/
 
-	if(a==0) {*ms_tmr=0;*filter_on=0;return 0;}
+	/*if(a==0) {*ms_tmr=0;*filter_on=0;return 0;}
 	else
 	{
 		if((*filter_on==0) && ((*ms_tmr<b) || (b==0))) *filter_on=1;
@@ -88,6 +92,18 @@ unsigned short delay_on(unsigned short *ms_tmr, unsigned short *filter_on, unsig
 			if(*ms_tmr>=b) {*filter_on=0;return 1;}
 			else return 0;
 		}else return 1;
+	}
+	return 0;*/
+	if(*filter_on!=FILTER_IS_WORKING) *ms_tmr=0;
+	if(b==0) return 1;
+	if(a==0) {*filter_on=FILTER_IS_WAITING_EDGE;return 0;}
+	else {
+		if(*filter_on==FILTER_OFF) return 1;
+		if(*filter_on==FILTER_IS_WAITING_EDGE) *filter_on=FILTER_IS_WORKING;
+		if(*filter_on==FILTER_IS_WORKING) {
+			if(*ms_tmr>=b) {*filter_on=FILTER_OFF;return 1;}
+			else return 0;
+		}
 	}
 	return 0;
 }
@@ -101,7 +117,7 @@ unsigned short delay_off(unsigned short *ms_tmr, unsigned short *filter_on, unsi
 		}else return 0;
 	}*/
 
-	if(a) {*ms_tmr=0;*filter_on=0;return 1;}
+	/*if(a) {*ms_tmr=0;*filter_on=0;return 1;}
 	else
 	{
 		if((*filter_on==0) && ((*ms_tmr<b) || (b==0))) *filter_on=1;
@@ -110,6 +126,18 @@ unsigned short delay_off(unsigned short *ms_tmr, unsigned short *filter_on, unsi
 			if(*ms_tmr>=b) {*filter_on=0;return 0;}
 			else return 1;
 		}else return 0;
+	}
+	return 0;*/
+	if(b==0) return 0;
+	if(*filter_on!=FILTER_IS_WORKING) *ms_tmr=0;
+	if(a) {*filter_on=FILTER_IS_WAITING_EDGE;return 1;}
+	else {
+		if(*filter_on==FILTER_OFF) return 0;
+		if(*filter_on==FILTER_IS_WAITING_EDGE) *filter_on=FILTER_IS_WORKING;
+		if(*filter_on==FILTER_IS_WORKING) {
+			if(*ms_tmr>=b) {*filter_on=FILTER_OFF;return 0;}
+			else return 1;
+		}
 	}
 	return 0;
 }
