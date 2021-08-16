@@ -63,7 +63,7 @@ void handle_adc(uint16_t raw_value, enum sens_type sensor, ai_mod_ptr mod, uint8
 			raw_value = val*500/62+0.5;
 			if(raw_value>=DI_ON_LEVEL) di = 1;
 			if(raw_value<DI_BREAK_LEVEL) di_br = 1;
-			if(raw_value>=DI_SC_LEVEL) di_sc = 1;
+			if(raw_value>=DI_SC_LEVEL) {di_sc = 1; di = 0;}
 			break;
 		case SENS0p4_2V:
 			if(val<400) val = 400;

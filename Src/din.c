@@ -75,7 +75,12 @@ void update_din() {
 		if((ai_type & ((uint16_t)1<<tmp)) && (!(used_ai & (1<<tmp)))) {
 			if(ain_raw[tmp]>=input_on_level) din[tmp]=1;else din[tmp]=0;
 			if(ain_raw[tmp]<=break_level) din_break[tmp]=1;else din_break[tmp]=0;
-			if(ain_raw[tmp]>=short_circuit_level) din_short_circuit[tmp]=1;else din_short_circuit[tmp]=0;
+			if(ain_raw[tmp]>=short_circuit_level) {
+				din_short_circuit[tmp]=1;
+				din[tmp]=0;
+			}else {
+				din_short_circuit[tmp]=0;
+			}
 			if(din_break[tmp] || din_short_circuit[tmp]) din_fault[tmp] = 1;else din_fault[tmp]=0;
 			if(din[tmp]) tmp_di_state_reg |= (uint16_t)1<<tmp;
 			if(din_short_circuit[tmp]) tmp_di_sh_circ_reg |= (uint16_t)1<<tmp;
