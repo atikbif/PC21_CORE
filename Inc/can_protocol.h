@@ -44,6 +44,7 @@ struct can_packet {
 	uint8_t data[CAN_DATA_SIZE];
 };
 
+void send_time(uint8_t *cur_time);
 uint8_t is_packet_extended(uint32_t can_id);
 enum SS_type get_ss(struct can_packet *packet);
 uint8_t get_eoid(struct can_packet *packet);

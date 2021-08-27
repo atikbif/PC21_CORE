@@ -92,6 +92,19 @@ void sendIOName(uint8_t ioNum, uint8_t type, uint8_t req_node, uint8_t req_num) 
 	add_tx_can_packet(&can1_tx_stack,&packet);
 }
 
+void send_time(uint8_t *cur_time) {
+	tx_stack_data packet;
+	packet.id = 0x0400 | 0x07 | (can_addr<<3) | (cluster_addr << 7);
+	packet.length = 6;
+	packet.data[0] = 0x1F; // request not fragmented, eoid - 0x1F
+	packet.data[1] = 0x0E; // time
+	packet.data[2] = cur_time[0];
+	packet.data[3] = cur_time[1];
+	packet.data[4] = cur_time[2];
+	packet.data[5] = cur_time[3];
+	add_tx_can_packet(&can1_tx_stack,&packet);
+}
+
 void sendResponse(tx_stack *stack, uint8_t signature, enum ExtCmd cmd) {
 	tx_stack_data tx_packet;
 	tx_packet.id = 0;

@@ -72,6 +72,9 @@ extern struct led_state can1_led_tx;
 extern struct led_state can2_led_rx;
 extern struct led_state can2_led_tx;
 
+extern uint8_t ob_time_upd;
+extern uint8_t answer_time[4];
+
 extern uint16_t VirtAddVarTab[NB_OF_VAR];
 extern uint8_t ip_addr[4];
 
@@ -206,6 +209,10 @@ void canTask(void const * argument) {
 		increment_others_heartbeats_counters();
 		increment_modules_heartbeats_counters();
 		if(update_all) update_all_data();
+		if(ob_time_upd) {
+			ob_time_upd = 0;
+			send_time(answer_time);
+		}
 		send_changed_data();
 		for(uint8_t i=0;i<rs_mod_cnt;++i) {
 			rs_module_write_config(&rs_modules_ptr[i],&can1_tx_stack);
