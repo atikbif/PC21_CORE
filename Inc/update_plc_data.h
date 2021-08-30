@@ -20,5 +20,6 @@ void update_ai_data();
 void update_all_data();
 void send_changed_data();
 void update_net_status();
+void update_eth_ip_state();
 
 #endif /* UPDATE_PLC_DATA_H_ */

@@ -51,6 +51,37 @@ extern struct do_mod* do_modules_ptr;
 
 static uint8_t net_status = 0;
 
+extern uint8_t eth_ip_upd;
+extern uint8_t eth_ip_state;
+
+void update_eth_ip_state() {
+	static uint16_t ethip_tmr=0;
+	if(eth_ip_upd) {
+		tx_stack_data packet;
+		if(ethip_tmr==10) {
+			packet.id = 0x0400 | 0x07 | (can_addr<<3) | (cluster_addr << 7);	// event
+			packet.length = 3;
+			packet.data[0] = 0x1F; // module data
+			packet.data[1] = 13; // telemetry errors
+			if(eth_ip_state==0x01) packet.data[2] = 0x01;else packet.data[2]=0x04;
+			add_tx_can_packet(&can1_tx_stack,&packet);
+		}else if(ethip_tmr==20) {
+			packet.id = 0x0400 | 0x07 | (can_addr<<3) | (cluster_addr << 7);	// event
+			packet.length = 5;
+			packet.data[0] = 0x1F; // module data
+			packet.data[1] = 17; // eip status
+			packet.data[2] = eth_ip_state;
+			packet.data[3] = 0;	// 10 mbit
+			packet.data[4] = 0; // half duplex
+			add_tx_can_packet(&can1_tx_stack,&packet);
+			eth_ip_upd = 0;
+		}
+		ethip_tmr++;
+	}else  {
+		ethip_tmr = 0;
+	}
+}
+
 void update_mod_do_data() {
 	static uint16_t mod_do_tmr=0;
 	if(mod_do_tmr>=10) {

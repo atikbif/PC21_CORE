@@ -78,6 +78,10 @@ extern uint8_t answer_time[4];
 extern uint16_t VirtAddVarTab[NB_OF_VAR];
 extern uint8_t ip_addr[4];
 
+extern uint8_t eth_ip_state;
+extern uint16_t eth_ip_tmr;
+extern uint8_t eth_ip_upd;
+
 void init_can_addr_pins() {
 
 	GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -219,6 +223,15 @@ void canTask(void const * argument) {
 		}
 		can_write_from_stack();
 		if(can_addr==0) can_write_from_stack2();
+
+		eth_ip_tmr++;
+		if(eth_ip_tmr>=3000) {
+			eth_ip_tmr = 0;
+			if(eth_ip_state!=0) eth_ip_upd = 1;
+			eth_ip_state = 0;
+		}
+		update_eth_ip_state();
+
 		osDelay(1);
 	}
 }
