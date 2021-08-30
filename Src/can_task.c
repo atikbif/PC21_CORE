@@ -350,6 +350,7 @@ static void handle_can1_extended_request(struct can_packet *rx_packet) {
 }
 
 static void handle_can1_stand_request(struct can_packet *rx_packet) {
+	static uint8_t tmp_ip[4] = {0,0,0,0};
 	struct can_packet_id *can_id = (struct can_packet_id *)(&rx_packet->id);
 	enum SS_type ss = get_ss(rx_packet);
 	uint8_t eoid = get_eoid(rx_packet);
@@ -414,14 +415,20 @@ static void handle_can1_stand_request(struct can_packet *rx_packet) {
 		case 0x1F:
 			if(intern_addr==16) {
 				if(rx_packet->data[CAN_HEADER_LENGTH+4]==0) { // fixed ip
-					ip_addr[0] = rx_packet->data[CAN_HEADER_LENGTH+3];
-					ip_addr[1] = rx_packet->data[CAN_HEADER_LENGTH+2];
-					EE_WriteVariable(VirtAddVarTab[3],((uint16_t)ip_addr[0]<<8) | ip_addr[1]);
-					ip_addr[2] = rx_packet->data[CAN_HEADER_LENGTH+1];
-					ip_addr[3] = rx_packet->data[CAN_HEADER_LENGTH+0];
-					EE_WriteVariable(VirtAddVarTab[4],((uint16_t)ip_addr[2]<<8) | ip_addr[3]);
-					HAL_Delay(50);
-				    NVIC_SystemReset();
+					tmp_ip[0] = rx_packet->data[CAN_HEADER_LENGTH+3];
+					tmp_ip[1] = rx_packet->data[CAN_HEADER_LENGTH+2];
+					tmp_ip[2] = rx_packet->data[CAN_HEADER_LENGTH+1];
+					tmp_ip[3] = rx_packet->data[CAN_HEADER_LENGTH+0];
+					if(tmp_ip[0]!=ip_addr[0] || tmp_ip[1]!=ip_addr[1] || tmp_ip[2]!=ip_addr[2] || tmp_ip[3]!=ip_addr[3]) {
+						ip_addr[0] = tmp_ip[0];
+						ip_addr[1] = tmp_ip[1];
+						ip_addr[2] = tmp_ip[2];
+						ip_addr[3] = tmp_ip[3];
+						EE_WriteVariable(VirtAddVarTab[3],((uint16_t)ip_addr[0]<<8) | ip_addr[1]);
+						EE_WriteVariable(VirtAddVarTab[4],((uint16_t)ip_addr[2]<<8) | ip_addr[3]);
+						HAL_Delay(50);
+						NVIC_SystemReset();
+					}
 				}
 			}
 			break;
