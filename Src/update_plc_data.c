@@ -40,6 +40,8 @@ extern uint8_t tdu[AI_CNT];
 extern uint16_t app_id;
 extern uint8_t update_all;
 
+extern unsigned char dout[DO_CNT];
+
 uint16_t update_di = 0x0000;
 uint16_t update_ai = 0x0000;
 uint16_t update_tmr = 0;
@@ -213,6 +215,8 @@ void update_di_data() {
 			packet.data[4] = di_mask; // mask
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			update_di &= 0xFF00;
+			send_state = 0;
+			send_fault = 0;
 		}
 	}else if(di_tmr==40) {
 		di_mask = ((update_di & di_fitted)>>8) & 0xFF;
@@ -234,7 +238,23 @@ void update_di_data() {
 			packet.data[4] = di_mask; // mask
 			add_tx_can_packet(&can1_tx_stack,&packet);
 			update_di &= 0x00FF;
+			send_state = 0;
+			send_fault = 0;
 		}
+	}else if(di_tmr==60) {
+		for(i=0;i<DO_CNT;i++) {
+			if(dout[i]) send_state |= 1<<i;
+		}
+		packet.id = 0x0400 | 0x07 | (can_addr<<3) | (cluster_addr << 7);	// event
+		packet.length = 5;
+		packet.data[0] = 0x01; // packed physical digits
+		packet.data[1] = 129; // start bit
+		packet.data[2] = send_state; // state
+		packet.data[3] = 0x00; // fault
+		packet.data[4] = 0x3F; // mask
+		add_tx_can_packet(&can1_tx_stack,&packet);
+		send_state = 0;
+		send_fault = 0;
 		di_tmr=0;
 	}
 }
