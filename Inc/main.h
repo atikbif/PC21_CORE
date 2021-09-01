@@ -99,6 +99,9 @@ void Error_Handler(void);
 #define RS485_DIR1_GPIO_Port GPIOD
 #define RS485_DIR2_Pin GPIO_PIN_2
 #define RS485_DIR2_GPIO_Port GPIOG
+#define SPI4_CS_Pin GPIO_PIN_3
+#define SPI4_CS_GPIO_Port GPIOG
+#define SPI4_CS_EXTI_IRQn EXTI3_IRQn
 #define RELE1_Pin GPIO_PIN_6
 #define RELE1_GPIO_Port GPIOC
 #define RELE2_Pin GPIO_PIN_7

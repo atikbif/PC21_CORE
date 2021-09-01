@@ -25,7 +25,7 @@
 #include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */     
+/* USER CODE BEGIN Includes */
 
 #include "ld_prog.h"
 #include "os_conf.h"
@@ -199,8 +199,6 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 1024);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
-  //if(can_check==0) return;
 
   /* definition and creation of progTask */
   osThreadDef(progTask, ProgTask, osPriorityBelowNormal, 0, 1024);

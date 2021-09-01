@@ -61,6 +61,10 @@ extern uint8_t dir2_tmr;
 extern uint8_t baud_dir1;
 extern uint8_t baud_dir2;
 
+#define LCD_BUF_SIZE	256
+volatile uint16_t lcd_rx_cnt = 0;
+volatile uint8_t lcd_buf[LCD_BUF_SIZE];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -79,6 +83,7 @@ extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi1_rx;
+extern SPI_HandleTypeDef hspi4;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
@@ -86,7 +91,7 @@ extern TIM_HandleTypeDef htim1;
 /* USER CODE END EV */
 
 /******************************************************************************/
-/*           Cortex-M4 Processor Interruption and Exception Handlers          */ 
+/*           Cortex-M4 Processor Interruption and Exception Handlers          */
 /******************************************************************************/
 /**
   * @brief This function handles Non maskable interrupt.
@@ -182,6 +187,24 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line3 interrupt.
+  */
+void EXTI3_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI3_IRQn 0 */
+
+  /* USER CODE END EXTI3_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
+  /* USER CODE BEGIN EXTI3_IRQn 1 */
+
+  if(HAL_GPIO_ReadPin(SPI4_CS_GPIO_Port, SPI4_CS_Pin)==GPIO_PIN_RESET) {
+	  lcd_rx_cnt = 0;
+  }
+
+  /* USER CODE END EXTI3_IRQn 1 */
+}
+
+/**
   * @brief This function handles DMA1 stream6 global interrupt.
   */
 void DMA1_Stream6_IRQHandler(void)
@@ -205,7 +228,7 @@ void DMA1_Stream6_IRQHandler(void)
 	}
 
   /* USER CODE END DMA1_Stream6_IRQn 0 */
-  
+
   /* USER CODE BEGIN DMA1_Stream6_IRQn 1 */
 
   /* USER CODE END DMA1_Stream6_IRQn 1 */
@@ -369,10 +392,26 @@ void DMA2_Stream7_IRQHandler(void)
 	}
 
   /* USER CODE END DMA2_Stream7_IRQn 0 */
-  
+
   /* USER CODE BEGIN DMA2_Stream7_IRQn 1 */
 
   /* USER CODE END DMA2_Stream7_IRQn 1 */
+}
+
+/**
+  * @brief This function handles SPI4 global interrupt.
+  */
+void SPI4_IRQHandler(void)
+{
+  /* USER CODE BEGIN SPI4_IRQn 0 */
+
+  lcd_buf[lcd_rx_cnt++] = (*(__IO uint8_t *)&hspi4.Instance->DR);
+
+  /* USER CODE END SPI4_IRQn 0 */
+  HAL_SPI_IRQHandler(&hspi4);
+  /* USER CODE BEGIN SPI4_IRQn 1 */
+
+  /* USER CODE END SPI4_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
