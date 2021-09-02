@@ -83,7 +83,6 @@ extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 extern DMA_HandleTypeDef hdma_spi1_tx;
 extern DMA_HandleTypeDef hdma_spi1_rx;
-extern SPI_HandleTypeDef hspi4;
 extern TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN EV */
@@ -198,7 +197,9 @@ void EXTI3_IRQHandler(void)
   /* USER CODE BEGIN EXTI3_IRQn 1 */
 
   if(HAL_GPIO_ReadPin(SPI4_CS_GPIO_Port, SPI4_CS_Pin)==GPIO_PIN_RESET) {
-	  lcd_rx_cnt = 0;
+	  //lcd_rx_cnt = 0;
+  }else {
+	  //SPI4->DR = 0x01;
   }
 
   /* USER CODE END EXTI3_IRQn 1 */
@@ -404,11 +405,26 @@ void DMA2_Stream7_IRQHandler(void)
 void SPI4_IRQHandler(void)
 {
   /* USER CODE BEGIN SPI4_IRQn 0 */
+	uint8_t tmp = 0;
+	if(LL_SPI_IsActiveFlag_RXNE(SPI4))
+	{
+		tmp = SPI4->DR;
+		lcd_buf[lcd_rx_cnt++] = tmp;
+		if(lcd_rx_cnt>=LCD_BUF_SIZE) lcd_rx_cnt = 0;
 
-  lcd_buf[lcd_rx_cnt++] = (*(__IO uint8_t *)&hspi4.Instance->DR);
+	}
+	else if(LL_SPI_IsActiveFlag_TXE(SPI4))
+	{
+		SPI4->DR = 100;
+	}
+	else if(LL_SPI_IsActiveFlag_OVR(SPI4))
+	{
+		__NOP();
+	}
+
+
 
   /* USER CODE END SPI4_IRQn 0 */
-  HAL_SPI_IRQHandler(&hspi4);
   /* USER CODE BEGIN SPI4_IRQn 1 */
 
   /* USER CODE END SPI4_IRQn 1 */

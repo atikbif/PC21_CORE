@@ -237,6 +237,10 @@ int main(void)
   LL_USART_Enable(USART1);
   LL_USART_Enable(USART2);
 
+  LL_SPI_Enable(SPI4);
+  LL_SPI_EnableIT_RXNE(SPI4);
+  LL_SPI_EnableIT_TXE(SPI4);
+
   RTC_TimeTypeDef sTime = {0};
   RTC_DateTypeDef sDate = {0};
 
@@ -265,8 +269,6 @@ int main(void)
 	}
 
 	init_can_tx_stack(&can1_tx_stack);
-
-	__HAL_SPI_ENABLE_IT(&hspi4, SPI_IT_RXNE | SPI_IT_ERR);
 
 
   /* USER CODE END 2 */
