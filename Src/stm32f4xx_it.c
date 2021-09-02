@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 
 #include "rs485.h"
+#include "lcd.h"
 
 /* USER CODE END Includes */
 
@@ -61,9 +62,11 @@ extern uint8_t dir2_tmr;
 extern uint8_t baud_dir1;
 extern uint8_t baud_dir2;
 
-#define LCD_BUF_SIZE	256
-volatile uint16_t lcd_rx_cnt = 0;
-volatile uint8_t lcd_buf[LCD_BUF_SIZE];
+
+extern volatile uint16_t lcd_rx_cnt;
+extern volatile uint16_t lcd_tx_cnt;
+extern volatile uint8_t lcd_buf[LCD_BUF_SIZE];
+extern uint8_t lcd_read_memory_mode;
 
 /* USER CODE END PV */
 
@@ -195,11 +198,30 @@ void EXTI3_IRQHandler(void)
   /* USER CODE END EXTI3_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_3);
   /* USER CODE BEGIN EXTI3_IRQn 1 */
-
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
+  __NOP();
   if(HAL_GPIO_ReadPin(SPI4_CS_GPIO_Port, SPI4_CS_Pin)==GPIO_PIN_RESET) {
-	  //lcd_rx_cnt = 0;
+	  // beginning of packet
+	  if(lcd_read_memory_mode==LCD_NEXT_PACKET_IS_FOR_READING) {
+		  lcd_read_memory_mode = LCD_CUR_PACKET_IS_FOR_READING;
+	  }
+	  lcd_rx_cnt = 0;
   }else {
-	  //SPI4->DR = 0x01;
+	  // end of packet
+	  SPI4->DR = LCD_HEADER_HIGH;
+	  lcd_tx_cnt = 1;
+	  check_lcd_rx_buf();
+	  if(lcd_read_memory_mode==LCD_CUR_PACKET_IS_FOR_READING) {
+		  lcd_read_memory_mode = LCD_NOT_READING;
+	  }
   }
 
   /* USER CODE END EXTI3_IRQn 1 */
@@ -409,13 +431,21 @@ void SPI4_IRQHandler(void)
 	if(LL_SPI_IsActiveFlag_RXNE(SPI4))
 	{
 		tmp = SPI4->DR;
-		lcd_buf[lcd_rx_cnt++] = tmp;
-		if(lcd_rx_cnt>=LCD_BUF_SIZE) lcd_rx_cnt = 0;
-
+		if(HAL_GPIO_ReadPin(SPI4_CS_GPIO_Port, SPI4_CS_Pin)==GPIO_PIN_RESET) {
+			lcd_buf[lcd_rx_cnt++] = tmp;
+			if(lcd_rx_cnt>=LCD_BUF_SIZE) lcd_rx_cnt = 0;
+		}
 	}
 	else if(LL_SPI_IsActiveFlag_TXE(SPI4))
 	{
-		SPI4->DR = 100;
+		if(lcd_tx_cnt==0) SPI4->DR = LCD_HEADER_HIGH;
+		else if(lcd_tx_cnt==1) SPI4->DR = LCD_HEADER_LOW;
+		else {
+			if(lcd_read_memory_mode==LCD_CUR_PACKET_IS_FOR_READING) {
+				SPI4->DR = get_lcd_memory_byte();
+			}else SPI4->DR=0xFF;
+		}
+		lcd_tx_cnt++;
 	}
 	else if(LL_SPI_IsActiveFlag_OVR(SPI4))
 	{

@@ -563,7 +563,8 @@ void ethernetif_input(void const * argument)
 {
   struct pbuf *p;
   struct netif *netif = (struct netif *) argument;
-uint32_t regvalue = 0;
+  uint32_t regvalue = 0;
+  netif_set_link_callback(netif, ethernetif_update_config);
 
   for( ;; )
   {
@@ -825,7 +826,7 @@ void ethernetif_update_config(struct netif *netif)
   else
   {
     /* Stop MAC interface */
-    HAL_ETH_Stop(&heth);
+    //HAL_ETH_Stop(&heth);
   }
 
   ethernetif_notify_conn_changed(netif);
