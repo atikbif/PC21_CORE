@@ -14,11 +14,14 @@
 #define LCD_HEADER_HIGH								0xA1
 #define LCD_HEADER_LOW								0x40
 
+#define LCD_HEADER_LENGTH				(2 + 1 + 1 + 2)  // id, cmd code, data type, addr
+
 #define LCD_NOT_READING								0x00
 #define LCD_NEXT_PACKET_IS_FOR_READING				0x01
 #define LCD_CUR_PACKET_IS_FOR_READING				0x02
 
 void check_lcd_rx_buf();
 uint8_t get_lcd_memory_byte();
+uint8_t get_lcd_header_byte(uint8_t num);
 
 #endif /* LCD_H_ */

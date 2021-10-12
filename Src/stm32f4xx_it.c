@@ -438,8 +438,7 @@ void SPI4_IRQHandler(void)
 	}
 	else if(LL_SPI_IsActiveFlag_TXE(SPI4))
 	{
-		if(lcd_tx_cnt==0) SPI4->DR = LCD_HEADER_HIGH;
-		else if(lcd_tx_cnt==1) SPI4->DR = LCD_HEADER_LOW;
+		if(lcd_tx_cnt<LCD_HEADER_LENGTH) SPI4->DR = get_lcd_header_byte(lcd_tx_cnt);
 		else {
 			if(lcd_read_memory_mode==LCD_CUR_PACKET_IS_FOR_READING) {
 				SPI4->DR = get_lcd_memory_byte();
