@@ -17,7 +17,7 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 #define PC21_CMD_RESET						3
 
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {6, 4};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 4};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -58,15 +58,37 @@ void check_lcd_rx_buf() {
 
 uint8_t get_lcd_memory_byte() {
 	uint8_t res = 0;
+	static uint8_t crc = 0;
 	if(lcd_mem_type==MAIN_SCREEN_MEM) {
 		if(lcd_mem_addr>=mem_length[MAIN_SCREEN_MEM]) lcd_mem_addr = 0;
 		switch(lcd_mem_addr) {
-			case 0:res = sTime.Hours;break;
-			case 1:res = sTime.Minutes;break;
-			case 2:res = sTime.Seconds;break;
-			case 3:res = sDate.Date;break;
-			case 4:res = sDate.Month;break;
-			case 5:res = sDate.Year;break;
+			case 0:
+				res = sTime.Hours;
+				crc = res;
+				break;
+			case 1:
+				res = sTime.Minutes;
+				crc += res;
+				break;
+			case 2:
+				res = sTime.Seconds;
+				crc += res;
+				break;
+			case 3:
+				res = sDate.Date;
+				crc += res;
+				break;
+			case 4:
+				res = sDate.Month;
+				crc += res;
+				break;
+			case 5:
+				res = sDate.Year;
+				crc += res;
+				break;
+			case 6:
+				res = crc;
+				break;
 		}
 		lcd_mem_addr++;
 		if(lcd_mem_addr>=mem_length[MAIN_SCREEN_MEM]) lcd_mem_addr = 0;
