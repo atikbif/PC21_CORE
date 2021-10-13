@@ -7,6 +7,7 @@
 
 #include "lcd.h"
 #include "stm32f4xx_hal.h"
+#include "os_conf.h"
 
 volatile uint16_t lcd_rx_cnt = 0;
 volatile uint16_t lcd_tx_cnt = 0;
@@ -16,8 +17,12 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 #define PC21_CMD_WRITE						2
 #define PC21_CMD_RESET						3
 
-enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5};
+#define REGS_ONE_RANGE		32
+
+enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
+					REG4_MEM, REG5_MEM, REG6_MEM, REG7_MEM, REG8_MEM,
+					LCD_MEM_TYPE_CNT};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -28,6 +33,7 @@ extern RTC_TimeTypeDef sTime;
 extern RTC_DateTypeDef sDate;
 
 extern uint8_t ip_addr[4];
+extern unsigned short ireg[IREG_CNT];
 
 static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 	uint8_t sum = 0;
@@ -96,6 +102,27 @@ static uint8_t get_main_screen_mem_byte() {
 	return res;
 }
 
+static uint8_t get_reg_mem_byte(unsigned char range_num) {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+	uint16_t offset = REGS_ONE_RANGE*range_num;
+	if(lcd_mem_addr>=mem_length[REG1_MEM+range_num]) lcd_mem_addr = 0;
+	if(lcd_mem_addr == 0) crc = 0;
+	if(lcd_mem_addr != mem_length[REG1_MEM+range_num]-1) {
+		if(lcd_mem_addr%2==0) {
+			res = ireg[offset+lcd_mem_addr/2]>>8;
+		}else {
+			res = ireg[offset+lcd_mem_addr/2] & 0xFF;
+		}
+		crc += res;
+	}else {
+		res = crc;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[REG1_MEM+range_num]) lcd_mem_addr = 0;
+	return res;
+}
+
 static uint8_t get_ip_mem_byte() {
 	uint8_t res = 0;
 	static uint8_t crc = 0;
@@ -134,6 +161,22 @@ uint8_t get_lcd_memory_byte() {
 		res = get_main_screen_mem_byte();
 	}else if(lcd_mem_type==IP_MEM) {
 		res = get_ip_mem_byte();
+	}else if(lcd_mem_type==REG1_MEM) {
+		res = get_reg_mem_byte(0);
+	}else if(lcd_mem_type==REG2_MEM) {
+		res = get_reg_mem_byte(1);
+	}else if(lcd_mem_type==REG3_MEM) {
+		res = get_reg_mem_byte(2);
+	}else if(lcd_mem_type==REG4_MEM) {
+		res = get_reg_mem_byte(3);
+	}else if(lcd_mem_type==REG5_MEM) {
+		res = get_reg_mem_byte(4);
+	}else if(lcd_mem_type==REG6_MEM) {
+		res = get_reg_mem_byte(5);
+	}else if(lcd_mem_type==REG7_MEM) {
+		res = get_reg_mem_byte(6);
+	}else if(lcd_mem_type==REG8_MEM) {
+		res = get_reg_mem_byte(7);
 	}
 	return res;
 }
