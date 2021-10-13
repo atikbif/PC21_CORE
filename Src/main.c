@@ -50,6 +50,8 @@
 #define	EEPROM_KEY_VALUE	0x3235
 #define	CONFIG_KEY_VALUE	0x1215
 
+#define JD0 2451545 // дней до 01 янв 2000 ПН
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -99,6 +101,20 @@ tx_stack can2_tx_stack;
 
 extern volatile uint8_t can1_tx_tmr;
 
+RTC_TimeTypeDef sTime = {0};
+RTC_DateTypeDef sDate = {0};
+
+typedef struct{
+	unsigned short year;
+	unsigned char month;
+	unsigned char day;
+	unsigned char hour;
+	unsigned char minute;
+	unsigned char second;
+} ftime_t;
+
+static ftime_t sdt1;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -110,6 +126,41 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void updateCurrentTime(unsigned long counter) {
+
+	uint32_t ace;
+	uint8_t b;
+	uint8_t d;
+	uint8_t m;
+
+	ace=(counter/86400)+32044+JD0;
+	b=(4*ace+3)/146097;
+	ace=ace-((146097*b)/4);
+	d=(4*ace+3)/1461;
+	ace=ace-((1461*d)/4);
+	m=(5*ace+2)/153;
+
+	portDISABLE_INTERRUPTS();
+
+	sdt1.day=ace-((153*m+2)/5)+1;
+	sdt1.month=m+3-(12*(m/10));
+	sdt1.year=100*b+d-4800+(m/10);
+	sdt1.hour=(counter/3600)%24;
+	sdt1.minute=(counter/60)%60;
+	sdt1.second=(counter%60);
+
+	sTime.Seconds = sdt1.second;
+	sTime.Minutes = sdt1.minute;
+	sTime.Hours = sdt1.hour;
+	sDate.Date = sdt1.day;
+	sDate.Month = sdt1.month;
+	if(sdt1.year>=2000) sDate.Year = sdt1.year - 2000;else sDate.Year = 0;
+	HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+	HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
+
+	portENABLE_INTERRUPTS();
+}
 
 /* USER CODE END 0 */
 
@@ -240,9 +291,6 @@ int main(void)
   LL_SPI_Enable(SPI4);
   LL_SPI_EnableIT_RXNE(SPI4);
   LL_SPI_EnableIT_TXE(SPI4);
-
-  RTC_TimeTypeDef sTime = {0};
-  RTC_DateTypeDef sDate = {0};
 
   HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
   HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);

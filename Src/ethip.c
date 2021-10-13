@@ -172,6 +172,8 @@ uint8_t eth_ip_state = 2;
 uint16_t eth_ip_tmr = 0;
 uint8_t eth_ip_upd = 1;
 
+extern void updateCurrentTime(unsigned long counter);
+
 static uint32_t get_new_session_handle(void) {
 	static uint32_t session_handle = 0x20021300 - 1;
 	session_handle++;
@@ -497,6 +499,12 @@ static uint16_t time_set_attribute_single(uint8_t* out,uint8_t *data) {
 	out[offset++] = 0x00;
 	ob_time_upd = 1;
 	for(i=0;i<sizeof(answer_time);i++) answer_time[i] = data[i];
+
+	unsigned long extTime = answer_time[3];
+	extTime<<=8;extTime|=answer_time[2];
+	extTime<<=8;extTime|=answer_time[1];
+	extTime<<=8;extTime|=answer_time[0];
+	updateCurrentTime(extTime);
 	return offset;
 }
 

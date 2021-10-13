@@ -99,6 +99,10 @@ extern uint16_t  VirtAddVarTab[NB_OF_VAR];
 
 extern uint8_t adc_link;
 
+extern RTC_TimeTypeDef sTime;
+extern RTC_DateTypeDef sDate;
+extern RTC_HandleTypeDef hrtc;
+
 /* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId progTaskHandle;
@@ -239,6 +243,7 @@ void StartDefaultTask(void const * argument)
   static uint16_t filter_cnt = 0;
   static uint8_t ms_tmr = 0;
   static uint16_t sys_led_tmr = 0;
+  static uint16_t sec_tmr = 0;
 
   init_din();
   init_leds();
@@ -255,6 +260,13 @@ void StartDefaultTask(void const * argument)
 			  sys_led_green.on_cmd = 1;
 		  }
 		  led_cycle(10);
+	  }
+
+	  sec_tmr++;
+	  if(sec_tmr>=1000) {
+		  sec_tmr=0;
+		  HAL_RTC_GetTime(&hrtc, &sTime, RTC_FORMAT_BIN);
+		  HAL_RTC_GetDate(&hrtc, &sDate, RTC_FORMAT_BIN);
 	  }
 
 	  update_data_to_scada();

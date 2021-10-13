@@ -6,6 +6,7 @@
  */
 
 #include "lcd.h"
+#include "stm32f4xx_hal.h"
 
 volatile uint16_t lcd_rx_cnt = 0;
 volatile uint16_t lcd_tx_cnt = 0;
@@ -16,12 +17,15 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 #define PC21_CMD_RESET						3
 
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {4, 4};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {6, 4};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
 
 static uint8_t lcd_mem_type = MAIN_SCREEN_MEM;
+
+extern RTC_TimeTypeDef sTime;
+extern RTC_DateTypeDef sDate;
 
 static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 	uint8_t sum = 0;
@@ -56,7 +60,15 @@ uint8_t get_lcd_memory_byte() {
 	uint8_t res = 0;
 	if(lcd_mem_type==MAIN_SCREEN_MEM) {
 		if(lcd_mem_addr>=mem_length[MAIN_SCREEN_MEM]) lcd_mem_addr = 0;
-		res = lcd_mem_addr++;// some data
+		switch(lcd_mem_addr) {
+			case 0:res = sTime.Hours;break;
+			case 1:res = sTime.Minutes;break;
+			case 2:res = sTime.Seconds;break;
+			case 3:res = sDate.Date;break;
+			case 4:res = sDate.Month;break;
+			case 5:res = sDate.Year;break;
+		}
+		lcd_mem_addr++;
 		if(lcd_mem_addr>=mem_length[MAIN_SCREEN_MEM]) lcd_mem_addr = 0;
 	}
 	return res;
