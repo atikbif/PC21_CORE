@@ -21,8 +21,9 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, REG5_MEM, REG6_MEM, REG7_MEM, REG8_MEM,
+					APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65, 21, 21, 21};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -34,6 +35,10 @@ extern RTC_DateTypeDef sDate;
 
 extern uint8_t ip_addr[4];
 extern unsigned short ireg[IREG_CNT];
+
+extern const char* app_name;
+const char* app_build_date;
+const char* app_version;
 
 static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 	uint8_t sum = 0;
@@ -153,6 +158,31 @@ static uint8_t get_ip_mem_byte() {
 	return res;
 }
 
+static uint8_t get_app_name_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+
+	uint8_t length = 0;
+	for(uint8_t i=0;i<20;i++) {
+		if(app_name[i]) length++;
+		else break;
+	}
+
+	if(lcd_mem_addr>=mem_length[APP_NAME_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr==0) crc = 0;
+
+	if(lcd_mem_addr != mem_length[APP_NAME_MEM]-1) {
+		if(lcd_mem_addr<length) res = app_name[lcd_mem_addr];
+		else res = ' ';
+		crc += res;
+	}else {
+		res = crc;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[APP_NAME_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
 
 uint8_t get_lcd_memory_byte() {
 	uint8_t res = 0;
@@ -177,6 +207,8 @@ uint8_t get_lcd_memory_byte() {
 		res = get_reg_mem_byte(6);
 	}else if(lcd_mem_type==REG8_MEM) {
 		res = get_reg_mem_byte(7);
+	}else if(lcd_mem_type==APP_NAME_MEM) {
+		res = get_app_name_mem_byte();
 	}
 	return res;
 }

@@ -65,6 +65,11 @@ extern uint16_t cluster_link[8];
 // SS24 aidi link
 extern uint8_t adc_link;
 
+
+const char* app_name = "тестовый проект 1234567890";
+const char* app_build_date = "00.00.00 00:00:00";
+const char* app_version = "1.0";
+
 uint16_t app_id = 0;
 uint8_t can_addr = 0x00;
 const char* di_names[14] = {"","","","","","","","","","","","","","",};
