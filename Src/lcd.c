@@ -22,8 +22,9 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, REG5_MEM, REG6_MEM, REG7_MEM, REG8_MEM,
 					APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
+					APP_CN_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65, 21, 21, 21};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65, 21, 21, 11, 3};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -39,6 +40,8 @@ extern unsigned short ireg[IREG_CNT];
 extern const char* app_name;
 const char* app_build_date;
 const char* app_version;
+
+extern uint16_t app_id;
 
 static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 	uint8_t sum = 0;
@@ -208,6 +211,53 @@ static uint8_t get_app_build_time_mem_byte() {
 	return res;
 }
 
+static uint8_t get_app_ver_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+
+	uint8_t length = 0;
+	for(uint8_t i=0;i<10;i++) {
+		if(app_version[i]) length++;
+		else break;
+	}
+
+	if(lcd_mem_addr>=mem_length[APP_VERSION_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr==0) crc = 0;
+
+	if(lcd_mem_addr != mem_length[APP_VERSION_MEM]-1) {
+		if(lcd_mem_addr<length) res = app_version[lcd_mem_addr];
+		else res = ' ';
+		crc += res;
+	}else {
+		res = crc;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[APP_VERSION_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
+static uint8_t get_app_cn_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+	if(lcd_mem_addr>=mem_length[APP_CN_MEM]) lcd_mem_addr = 0;
+	switch(lcd_mem_addr) {
+		case 0:
+			res = app_id >> 8;
+			crc = res;
+			break;
+		case 1:
+			res = app_id & 0xFF;
+			crc += res;
+			break;
+		case 2:
+			res = crc;
+			break;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[APP_CN_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
 uint8_t get_lcd_memory_byte() {
 	uint8_t res = 0;
 
@@ -235,6 +285,10 @@ uint8_t get_lcd_memory_byte() {
 		res = get_app_name_mem_byte();
 	}else if(lcd_mem_type==APP_BUILD_DATE_MEM) {
 		res = get_app_build_time_mem_byte();
+	}else if(lcd_mem_type==APP_CN_MEM) {
+		res = get_app_cn_mem_byte();
+	}else if(lcd_mem_type==APP_VERSION_MEM) {
+		res = get_app_ver_mem_byte();
 	}
 	return res;
 }
