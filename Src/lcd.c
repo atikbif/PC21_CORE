@@ -183,6 +183,30 @@ static uint8_t get_app_name_mem_byte() {
 	return res;
 }
 
+static uint8_t get_app_build_time_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+
+	uint8_t length = 0;
+	for(uint8_t i=0;i<20;i++) {
+		if(app_build_date[i]) length++;
+		else break;
+	}
+
+	if(lcd_mem_addr>=mem_length[APP_BUILD_DATE_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr==0) crc = 0;
+
+	if(lcd_mem_addr != mem_length[APP_BUILD_DATE_MEM]-1) {
+		if(lcd_mem_addr<length) res = app_build_date[lcd_mem_addr];
+		else res = ' ';
+		crc += res;
+	}else {
+		res = crc;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[APP_BUILD_DATE_MEM]) lcd_mem_addr = 0;
+	return res;
+}
 
 uint8_t get_lcd_memory_byte() {
 	uint8_t res = 0;
@@ -209,6 +233,8 @@ uint8_t get_lcd_memory_byte() {
 		res = get_reg_mem_byte(7);
 	}else if(lcd_mem_type==APP_NAME_MEM) {
 		res = get_app_name_mem_byte();
+	}else if(lcd_mem_type==APP_BUILD_DATE_MEM) {
+		res = get_app_build_time_mem_byte();
 	}
 	return res;
 }
