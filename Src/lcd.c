@@ -9,6 +9,7 @@
 #include "stm32f4xx_hal.h"
 #include "os_conf.h"
 #include "system_vars.h"
+#include <string.h>
 
 volatile uint16_t lcd_rx_cnt = 0;
 volatile uint16_t lcd_tx_cnt = 0;
@@ -23,8 +24,9 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					APP_CN_MEM, BITS_MEM, MODB1_MEM, MODB2_MEM, SYS_REG_MEM,
+					REL_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49, 67};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -40,8 +42,11 @@ extern unsigned char ibit[IBIT_CNT];
 extern uint16_t mmb[128];
 
 extern const char* app_name;
-const char* app_build_date;
-const char* app_version;
+extern const char* app_build_date;
+extern const char* app_version;
+extern const char* do_names[6];
+
+extern unsigned char dout[DO_CNT];
 
 extern uint16_t app_id;
 
@@ -123,10 +128,35 @@ static uint8_t get_sys_reg_screen_mem_byte() {
 	if(lcd_mem_addr != mem_length[SYS_REG_MEM]-1) {
 		if(lcd_mem_addr%2==0) res = getSSVar(lcd_mem_addr/2)>>8;
 		else res = getSSVar(lcd_mem_addr/2) & 0xFF;
-		if(lcd_mem_addr==0) crc = res;
+		if(lcd_mem_addr==0) crc = 0;
+		crc+= res;
 	}else res = crc;
 	lcd_mem_addr++;
 	if(lcd_mem_addr>=mem_length[SYS_REG_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
+static uint8_t get_relay_screen_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+	if(lcd_mem_addr>=mem_length[REL_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr != mem_length[REL_MEM]-1) {
+		uint16_t rel_num = lcd_mem_addr/11;
+		uint16_t offset = lcd_mem_addr%11;
+		if(rel_num<6) {
+			if(offset<10) {
+				uint16_t name_length = strlen(do_names[rel_num]);
+				if(offset<name_length) res = do_names[rel_num][offset];
+				else res = ' ';
+			}else {
+				if(dout[rel_num]) res|=0x01;
+			}
+		}
+		if(lcd_mem_addr==0) crc = 0;
+		crc+=res;
+	}else res = crc;
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[REL_MEM]) lcd_mem_addr = 0;
 	return res;
 }
 
@@ -350,6 +380,8 @@ uint8_t get_lcd_memory_byte() {
 		res = get_modb_mem_byte(1);
 	}else if(lcd_mem_type==SYS_REG_MEM) {
 		res = get_sys_reg_screen_mem_byte();
+	}else if(lcd_mem_type==REL_MEM) {
+		res = get_relay_screen_mem_byte();
 	}
 	return res;
 }
