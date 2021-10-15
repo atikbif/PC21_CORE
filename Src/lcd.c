@@ -24,7 +24,7 @@ enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					APP_CN_MEM, BITS_MEM, MODB1_MEM, MODB2_MEM, SYS_REG_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -104,6 +104,10 @@ static uint8_t get_main_screen_mem_byte() {
 			crc += res;
 			break;
 		case 6:
+			res = getSSVar(13); // telemetry state
+			crc += res;
+			break;
+		case 7:
 			res = crc;
 			break;
 	}
