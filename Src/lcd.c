@@ -21,9 +21,9 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
-					APP_CN_MEM, BITS_MEM,
+					APP_CN_MEM, BITS_MEM, MODB1_MEM, MODB2_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -36,6 +36,7 @@ extern RTC_DateTypeDef sDate;
 extern uint8_t ip_addr[4];
 extern unsigned short ireg[IREG_CNT];
 extern unsigned char ibit[IBIT_CNT];
+extern uint16_t mmb[128];
 
 extern const char* app_name;
 const char* app_build_date;
@@ -128,6 +129,27 @@ static uint8_t get_reg_mem_byte(unsigned char range_num) {
 	}
 	lcd_mem_addr++;
 	if(lcd_mem_addr>=mem_length[REG1_MEM+range_num]) lcd_mem_addr = 0;
+	return res;
+}
+
+static uint8_t get_modb_mem_byte(unsigned char range_num) {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+	uint16_t offset = REGS_ONE_RANGE*range_num;
+	if(lcd_mem_addr>=mem_length[MODB1_MEM+range_num]) lcd_mem_addr = 0;
+	if(lcd_mem_addr == 0) crc = 0;
+	if(lcd_mem_addr != mem_length[MODB1_MEM+range_num]-1) {
+		if(lcd_mem_addr%2==0) {
+			res = mmb[offset+lcd_mem_addr/2]>>8;
+		}else {
+			res = mmb[offset+lcd_mem_addr/2] & 0xFF;
+		}
+		crc += res;
+	}else {
+		res = crc;
+	}
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[MODB1_MEM+range_num]) lcd_mem_addr = 0;
 	return res;
 }
 
@@ -303,6 +325,10 @@ uint8_t get_lcd_memory_byte() {
 		res = get_app_ver_mem_byte();
 	}else if(lcd_mem_type==BITS_MEM) {
 		res = get_bits_mem_byte();
+	}else if(lcd_mem_type==MODB1_MEM) {
+		res = get_modb_mem_byte(0);
+	}else if(lcd_mem_type==MODB2_MEM) {
+		res = get_modb_mem_byte(1);
 	}
 	return res;
 }
