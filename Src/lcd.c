@@ -24,9 +24,9 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					APP_CN_MEM, BITS_MEM, MODB1_MEM, MODB2_MEM, SYS_REG_MEM,
-					REL_MEM,
+					REL_MEM, INP_CONF_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49, 67};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 8, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49, 67, 15};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -40,6 +40,13 @@ extern uint8_t ip_addr[4];
 extern unsigned short ireg[IREG_CNT];
 extern unsigned char ibit[IBIT_CNT];
 extern uint16_t mmb[128];
+extern uint8_t net_address;
+extern const uint16_t canal1_req_count;
+extern const uint16_t canal2_req_count;
+
+extern uint16_t used_ai;
+extern uint16_t ai_type;
+
 
 extern const char* app_name;
 extern const char* app_build_date;
@@ -136,6 +143,24 @@ static uint8_t get_sys_reg_screen_mem_byte() {
 	return res;
 }
 
+static uint8_t get_inp_conf_mem_byte() {
+	uint8_t res = 0;
+	static uint8_t crc = 0;
+	if(lcd_mem_addr>=mem_length[INP_CONF_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr != mem_length[INP_CONF_MEM]-1) {
+		if(ai_type & ((uint16_t)1<<lcd_mem_addr)) {
+			if(used_ai & (1<<lcd_mem_addr)) {
+				res = 2;
+			}else res = 1;
+		}else res = 3;
+		if(lcd_mem_addr==0) crc = 0;
+		crc+= res;
+	}else res = crc;
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[INP_CONF_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
 static uint8_t get_relay_screen_mem_byte() {
 	uint8_t res = 0;
 	static uint8_t crc = 0;
@@ -224,6 +249,18 @@ static uint8_t get_ip_mem_byte() {
 			crc += res;
 			break;
 		case 4:
+			res = net_address;
+			crc += res;
+			break;
+		case 5:
+			if(canal1_req_count) res = 1;
+			crc += res;
+			break;
+		case 6:
+			if(canal2_req_count) res = 1;
+			crc += res;
+			break;
+		case 7:
 			res = crc;
 			break;
 	}
@@ -382,6 +419,8 @@ uint8_t get_lcd_memory_byte() {
 		res = get_sys_reg_screen_mem_byte();
 	}else if(lcd_mem_type==REL_MEM) {
 		res = get_relay_screen_mem_byte();
+	}else if(lcd_mem_type==INP_CONF_MEM) {
+		res = get_inp_conf_mem_byte();
 	}
 	return res;
 }
