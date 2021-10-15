@@ -17,14 +17,13 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 #define PC21_CMD_WRITE						2
 #define PC21_CMD_RESET						3
 
-#define REGS_ONE_RANGE		32
+#define REGS_ONE_RANGE		64
 
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
-					REG4_MEM, REG5_MEM, REG6_MEM, REG7_MEM, REG8_MEM,
-					APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
+					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					APP_CN_MEM, BITS_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 65, 65, 65, 65, 65, 65, 65, 65, 21, 21, 11, 3, 33};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {7, 5, 129, 129, 129, 129, 21, 21, 11, 3, 33};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -294,14 +293,6 @@ uint8_t get_lcd_memory_byte() {
 		res = get_reg_mem_byte(2);
 	}else if(lcd_mem_type==REG4_MEM) {
 		res = get_reg_mem_byte(3);
-	}else if(lcd_mem_type==REG5_MEM) {
-		res = get_reg_mem_byte(4);
-	}else if(lcd_mem_type==REG6_MEM) {
-		res = get_reg_mem_byte(5);
-	}else if(lcd_mem_type==REG7_MEM) {
-		res = get_reg_mem_byte(6);
-	}else if(lcd_mem_type==REG8_MEM) {
-		res = get_reg_mem_byte(7);
 	}else if(lcd_mem_type==APP_NAME_MEM) {
 		res = get_app_name_mem_byte();
 	}else if(lcd_mem_type==APP_BUILD_DATE_MEM) {
