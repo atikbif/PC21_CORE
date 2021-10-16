@@ -24,9 +24,14 @@ volatile uint8_t lcd_buf[LCD_BUF_SIZE];
 enum lcd_data_type {MAIN_SCREEN_MEM, IP_MEM, REG1_MEM, REG2_MEM,REG3_MEM,
 					REG4_MEM, APP_NAME_MEM, APP_BUILD_DATE_MEM, APP_VERSION_MEM,
 					APP_CN_MEM, BITS_MEM, MODB1_MEM, MODB2_MEM, SYS_REG_MEM,
-					REL_MEM, INP_CONF_MEM, INP_RAW_MEM,
+					REL_MEM, INP_CONF_MEM, INP_RAW_MEM, DI1_MEM, DI2_MEM,
+					AI1_MEM, AI2_MEM,
 					LCD_MEM_TYPE_CNT};
-static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 8, 129, 129, 129, 129, 21, 21, 11, 3, 33, 129, 129, 49, 67, 15, 43};
+static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 8, 129, 129, 129,
+													 129, 21, 21, 11,
+													 3, 33, 129, 129, 49,
+													 67, 15, 43, 78, 78,
+													 85, 85};
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
@@ -52,9 +57,18 @@ extern const char* app_name;
 extern const char* app_build_date;
 extern const char* app_version;
 extern const char* do_names[6];
+extern const char* di_names[14];
+extern const char* adc_names[14];
+
+extern unsigned char din_break[DI_CNT];
+extern unsigned char din_short_circuit[DI_CNT];
+extern unsigned char din[DI_CNT];
 
 extern unsigned char dout[DO_CNT];
 extern unsigned short ain_raw[AI_CNT];
+extern unsigned short ain[AI_CNT];
+extern unsigned char ain_under[AI_CNT];
+extern unsigned char ain_over[AI_CNT];
 
 extern uint16_t app_id;
 
@@ -203,6 +217,78 @@ static uint8_t get_relay_screen_mem_byte() {
 	}else res = crc;
 	lcd_mem_addr++;
 	if(lcd_mem_addr>=mem_length[REL_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
+static uint8_t get_di_screen_mem_byte(unsigned char range) {
+	uint8_t res = 0;
+	uint8_t start_num = 0;
+	if(range) start_num = 7;
+	static uint8_t crc = 0;
+	if(lcd_mem_addr>=mem_length[DI1_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr != mem_length[DI1_MEM]-1) {
+		uint16_t di_num = lcd_mem_addr/11;
+		uint16_t offset = lcd_mem_addr%11;
+		if(di_num<7) {
+			if(offset<10) {
+				uint16_t name_length = strlen(di_names[di_num+start_num]);
+				if(offset<name_length) res = di_names[di_num+start_num][offset];
+				else res = ' ';
+			}else {
+				// 0 - unused
+				// 1 - on
+				// 2 - off
+				// 3 - break
+				// 4 - short circuit
+				if((ai_type & ((uint16_t)1<<(di_num+start_num))) && (!(used_ai & (1<<(di_num+start_num))))) {
+					if(din_break[di_num+start_num]) res = 3;
+					else if(din_short_circuit[di_num+start_num]) res = 4;
+					else if(din[di_num+start_num]) res = 1;
+					else res = 2;
+				}else res = 0;
+			}
+		}
+		if(lcd_mem_addr==0) crc = 0;
+		crc+=res;
+	}else res = crc;
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[DI1_MEM]) lcd_mem_addr = 0;
+	return res;
+}
+
+static uint8_t get_ai_screen_mem_byte(unsigned char range) {
+	uint8_t res = 0;
+	uint8_t start_num = 0;
+	if(range) start_num = 7;
+	static uint8_t crc = 0;
+	if(lcd_mem_addr>=mem_length[AI1_MEM]) lcd_mem_addr = 0;
+	if(lcd_mem_addr != mem_length[AI1_MEM]-1) {
+		uint16_t ai_num = lcd_mem_addr/12;
+		uint16_t offset = lcd_mem_addr%12;
+		if(ai_num<7) {
+			if(offset<10) {
+				uint16_t name_length = strlen(adc_names[ai_num+start_num]);
+				if(offset<name_length) res = adc_names[ai_num+start_num][offset];
+				else res = ' ';
+			}else if(offset==10){
+				if(used_ai & (1<<(ai_num+start_num))) {
+					// 0 - not used
+					// 1 - under
+					// 2 - over
+					// 3 - ok
+					if(ain_under[ai_num+start_num]) res = 1;
+					else if(ain_over[ai_num+start_num]) res = 2;
+					else res = 3;
+				}else res = 0;
+			}else if(offset==11) {
+				res = ain[ai_num+start_num] & 0xFF;
+			}
+		}
+		if(lcd_mem_addr==0) crc = 0;
+		crc+=res;
+	}else res = crc;
+	lcd_mem_addr++;
+	if(lcd_mem_addr>=mem_length[AI1_MEM]) lcd_mem_addr = 0;
 	return res;
 }
 
@@ -444,6 +530,14 @@ uint8_t get_lcd_memory_byte() {
 		res = get_inp_conf_mem_byte();
 	}else if(lcd_mem_type==INP_RAW_MEM) {
 		res = get_inp_raw_mem_byte();
+	}else if(lcd_mem_type==DI1_MEM) {
+		res = get_di_screen_mem_byte(0);
+	}else if(lcd_mem_type==DI2_MEM) {
+		res = get_di_screen_mem_byte(1);
+	}else if(lcd_mem_type==AI1_MEM) {
+		res = get_ai_screen_mem_byte(0);
+	}else if(lcd_mem_type==AI2_MEM) {
+		res = get_ai_screen_mem_byte(2);
 	}
 	return res;
 }
