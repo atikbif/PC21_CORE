@@ -563,46 +563,23 @@ void ethernetif_input(void const * argument)
 {
   struct pbuf *p;
   struct netif *netif = (struct netif *) argument;
-  uint32_t regvalue = 0;
-  netif_set_link_callback(netif, ethernetif_update_config);
 
   for( ;; )
   {
-      //if (osSemaphoreWait(s_xSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
-	  if(netif_is_link_up(netif)) {
-		  if (osSemaphoreWait(s_xSemaphore, 1000) == osOK)
-		      {
-		        do
-		        {
-		          p = low_level_input( netif );
-		          if   (p != NULL)
-		          {
-		            if (netif->input( p, netif) != ERR_OK )
-		            {
-		              pbuf_free(p);
-		            }
-		          }
-		        } while(p!=NULL);
-		      }else {
-		      	if (HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue) == HAL_OK) {
-		      		if((regvalue & PHY_LINKED_STATUS)== (uint16_t)RESET) {
-		      		   // Link status = disconnected
-					   netif_set_down(netif);
-					   netif_set_link_down(netif);
-		      		}
-		      	}
-		      	osDelay(1);
-		      }
-	  }else {
-		  if (HAL_ETH_ReadPHYRegister(&heth, PHY_BSR, &regvalue) == HAL_OK) {
-			if((regvalue & PHY_LINKED_STATUS)!= (uint16_t)RESET) {
-				netif_set_up(netif);
-				netif_set_link_up(netif);
+      if (osSemaphoreWait(s_xSemaphore, TIME_WAITING_FOR_INPUT) == osOK)
+	  {
+		do
+		{
+		  p = low_level_input( netif );
+		  if   (p != NULL)
+		  {
+			if (netif->input( p, netif) != ERR_OK )
+			{
+			  pbuf_free(p);
 			}
 		  }
-		  osDelay(1000);
+		} while(p!=NULL);
 	  }
-
   }
 }
 
