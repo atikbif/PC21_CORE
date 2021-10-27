@@ -10,6 +10,7 @@
 #include "os_conf.h"
 #include "system_vars.h"
 #include <string.h>
+#include "eeprom.h"
 
 volatile uint16_t lcd_rx_cnt = 0;
 volatile uint16_t lcd_tx_cnt = 0;
@@ -35,6 +36,8 @@ static const uint8_t mem_length[LCD_MEM_TYPE_CNT] = {8, 8, 129, 129, 129,
 
 uint8_t lcd_read_memory_mode = LCD_NOT_READING;
 uint16_t lcd_mem_addr = 0;
+uint16_t lcd_mem_cnt = 0;
+uint32_t lcd_mem_wr_data = 0;
 
 static uint8_t lcd_mem_type = MAIN_SCREEN_MEM;
 
@@ -72,6 +75,8 @@ extern unsigned char ain_over[AI_CNT];
 
 extern uint16_t app_id;
 
+extern uint16_t VirtAddVarTab[NB_OF_VAR];
+
 static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 	uint8_t sum = 0;
 	uint16_t i = 0;
@@ -79,6 +84,33 @@ static uint8_t get_checksum(uint8_t *ptr, uint8_t cnt) {
 		sum+=ptr[i];
 	}
 	return sum;
+}
+
+static void do_cmd(uint8_t mem_type, uint16_t mem_addr, uint8_t cnt, uint8_t* ptr) {
+	if(mem_type==IP_MEM) {
+		if(mem_addr==0 && cnt==4) {
+			if((ptr[0]!=ip_addr[0])||(ptr[1]!=ip_addr[1])||(ptr[2]!=ip_addr[2])||(ptr[3]!=ip_addr[3])) {
+				uint16_t v = 0;
+				ip_addr[0] = ptr[0];
+				ip_addr[1] = ptr[1];
+				v = (((uint16_t)ip_addr[0])<<8) | ip_addr[1];
+				EE_WriteVariable(VirtAddVarTab[3],v);
+				ip_addr[2] = ptr[2];
+				ip_addr[3] = ptr[3];
+				v = (((uint16_t)ip_addr[2])<<8) | ip_addr[3];
+				EE_WriteVariable(VirtAddVarTab[4],v);
+				HAL_Delay(50);
+			    NVIC_SystemReset();
+			}
+		}else if(mem_addr==5 && cnt==1) {
+			if(ptr[0] != net_address) {
+				net_address = ptr[0] ;
+				EE_WriteVariable(VirtAddVarTab[2],net_address);
+				HAL_Delay(50);
+				NVIC_SystemReset();
+			}
+		}
+	}
 }
 
 void check_lcd_rx_buf() {
@@ -93,9 +125,13 @@ void check_lcd_rx_buf() {
 					lcd_mem_addr |= lcd_buf[5];
 					break;
 				case PC21_CMD_WRITE:
+					lcd_mem_type = lcd_buf[3];
+					lcd_mem_addr = (uint16_t)lcd_buf[4] << 8;
+					lcd_mem_addr |= lcd_buf[5];
+					lcd_mem_cnt = lcd_buf[6];
+					do_cmd(lcd_mem_type,lcd_mem_addr,lcd_mem_cnt,(unsigned char*)&lcd_buf[7]);
 					break;
-				case PC21_CMD_RESET:
-					break;
+
 			}
 		}
 	}
