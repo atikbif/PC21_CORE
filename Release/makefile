@@ -100,7 +100,7 @@ clean:
 	-@echo ' '
 
 post-build:
-	arm-none-eabi-objcopy.exe -O ihex "Core.elf" "Core.hex"
+	arm-none-eabi-objcopy -O ihex "Core.elf" "Core.hex"
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST) $(OBJCOPY_BIN)
